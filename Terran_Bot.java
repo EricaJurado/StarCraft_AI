@@ -34,6 +34,7 @@ public class Testing implements BWAPIEventListener {
 	public static int TerranMedic_Count = 0;
 	public static boolean builtBarracks = false;
 	public static boolean builtAcademy = false;
+	public static boolean builtFactory = false;
 	public static Position myBase;
 	
 	public static void main(String[] args) {
@@ -96,6 +97,19 @@ public class Testing implements BWAPIEventListener {
 					if (null != buildHere) {
 						unit.build(buildHere, UnitTypes.Terran_Academy);
 						builtAcademy = true;
+					}
+					break;
+				}
+			}
+		}
+
+		if (!builtFactory) {
+			for (Unit unit : bwapi.getMyUnits()) {
+				if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 200 && bwapi.getSelf().getGas() >= 100) {
+					Position buildHere = getSuitablePos(unit, UnitTypes.Terran_Factory, bwapi.getSelf().getStartLocation());
+					if (null != buildHere) {
+						unit.build(buildHere, UnitTypes.Terran_Factory);
+						builtFactory = true;
 					}
 					break;
 				}
