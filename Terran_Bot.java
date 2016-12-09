@@ -31,7 +31,9 @@ public class Testing implements BWAPIEventListener {
 	
 	public static int TerranSCV_Count = 4;
 	public static int TerranMarine_Count = 0;
+	public static int TerranMedic_Count = 0;
 	public static boolean builtBarracks = false;
+	public static boolean builtAcademy = false;
 	public static Position myBase;
 	
 	public static void main(String[] args) {
@@ -76,7 +78,7 @@ public class Testing implements BWAPIEventListener {
 		// if we haven't already built barracks and we have a scv unit available, spend 250 minerals to build barracks
 		if (!builtBarracks){
 			for (Unit unit : bwapi.getMyUnits()) {
-				if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 250) {
+				if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 250) { //barracks only 150?
 					Position buildHere = getSuitablePos(unit, UnitTypes.Terran_Barracks, bwapi.getSelf().getStartLocation());
 					if (null != buildHere) {
 						unit.build(buildHere, UnitTypes.Terran_Barracks);
@@ -86,9 +88,22 @@ public class Testing implements BWAPIEventListener {
 				}
 			}
 		}
-		
-		// if marine count is less than 4 and we have barracks, build another marine
-		if (TerranMarine_Count < 4){
+
+		if (builtBarracks && !builtAcademy) {
+			for (Unit unit : bwapi.getMyUnits()) {
+				if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 150) {
+					Position buildHere = getSuitablePos(unit, UnitTypes.Terran_Academy, bwapi.getSelf().getStartLocation());
+					if (null != buildHere) {
+						unit.build(buildHere, UnitTypes.Terran_Academy);
+						builtAcademy = true;
+					}
+					break;
+				}
+			}
+		}
+
+		// if marine count is less than 3 and we have barracks, build another marine
+		if (TerranMarine_Count < 3){
 			for (Unit unit : bwapi.getMyUnits()) {
 				if (unit.getType() == UnitTypes.Terran_Barracks && bwapi.getSelf().getMinerals() >= 50 ) {
 					unit.train(UnitTypes.Terran_Marine);
@@ -96,7 +111,20 @@ public class Testing implements BWAPIEventListener {
 				}
 			}
 		}
-		
+
+
+
+		// if marine count is 3 build medic
+		// could add something like && (TerranMarine_Count / TerranMedic_Count < 3)
+		if (TerranMarine_Count >= 3) {
+			for (Unit unit: bwapi.getMyUnits()) {
+				if (unit.getType() == UnitTypes.Terran_Academy && bwapi.getSelf().getMinerals() >= 50 ) {
+					unit.train(UnitTypes.Terran_Medic);
+					TerranMedic_Count ++;
+				}
+			}
+		}
+
 		// spawn a unit?
 		// if scv counter is less than 6, build another scv
 		if (TerranSCV_Count < 6){
