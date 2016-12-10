@@ -90,6 +90,7 @@ public class Testing implements BWAPIEventListener {
 			}
 		}
 
+		// if we have a barracks but no academy, build academy
 		if (builtBarracks && !builtAcademy) {
 			for (Unit unit : bwapi.getMyUnits()) {
 				if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 150) {
@@ -103,6 +104,7 @@ public class Testing implements BWAPIEventListener {
 			}
 		}
 
+		// if we have a barracks and gas, but no factories, build factory
 		if (!builtFactory) {
 			for (Unit unit : bwapi.getMyUnits()) {
 				if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 200 && bwapi.getSelf().getGas() >= 100) {
@@ -138,6 +140,19 @@ public class Testing implements BWAPIEventListener {
 				}
 			}
 		}
+
+		//if you have a 3&1 marine/medic group, built bunker and move them there
+		if (TerranMarine_Count = 3 && TerranMedic_Count = 1) {
+			for (Unit unit : bwapi.getMyUnits()) {
+				if (unit.getType() == UnitTypes.Terran_Marine && unit.isIdle()) {
+					unit.attack(enemy.getPostition(), false);
+				}
+				if (unit.getType() == UnitTypes.Terran_Medic && unit.isIdle()) {
+					unit.follow(/*thoseGuys*/, false);
+				}
+			}
+		}
+
 
 		// spawn a unit?
 		// if scv counter is less than 6, build another scv
