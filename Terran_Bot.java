@@ -35,6 +35,7 @@ public class Testing implements BWAPIEventListener {
 	public static boolean builtBarracks = false;
 	public static boolean builtAcademy = false;
 	public static boolean builtFactory = false;
+	public static boolean builtMachineShop = false;
 	public static Position myBase;
 	
 	public static void main(String[] args) {
@@ -118,6 +119,19 @@ public class Testing implements BWAPIEventListener {
 			}
 		}
 
+		if (builtFactory && !builtMachineShop) {
+			for (Unit unit : bwapi.getMyUnits()) {
+				if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 50 && bwapi.getSelf().getGas() >= 50) {
+					Position buildHere = getSuitablePos(unit, UnitTypes.Terran_Machine_Shop, bwapi.getSelf().getStartLocation());
+					if (null != buildHere) {
+						unit.build(buildHere, UnitTypes.Terran_Machine_Shop);
+						builtMachineShop = true;
+					}
+					break;
+				}
+			}
+		}
+
 		// if marine count is less than 3 and we have barracks, build another marine
 		if (TerranMarine_Count < 3){
 			for (Unit unit : bwapi.getMyUnits()) {
@@ -148,9 +162,8 @@ public class Testing implements BWAPIEventListener {
 					unit.attack(enemy.getPostition(), false);
 				}
 				if (unit.getType() == UnitTypes.Terran_Medic && unit.isIdle()) {
-					unit.follow(/*thoseGuys*/, false);
+					unit.move(???, false);
 				}
-			}
 		}
 
 
