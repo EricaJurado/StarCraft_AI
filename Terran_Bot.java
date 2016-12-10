@@ -32,6 +32,7 @@ public class Testing implements BWAPIEventListener {
 	public static int TerranSCV_Count = 4;
 	public static int TerranMarine_Count = 0;
 	public static int TerranMedic_Count = 0;
+	public static int TerranTank_Count = 0;
 	public static boolean builtBarracks = false;
 	public static boolean builtAcademy = false;
 	public static boolean builtFactory = false;
@@ -155,15 +156,23 @@ public class Testing implements BWAPIEventListener {
 			}
 		}
 
-		//if you have a 3&1 marine/medic group, built bunker and move them there
+		//if you have a 3/1 marine/medic group, built bunker and move them there
 		if (TerranMarine_Count = 3 && TerranMedic_Count = 1) {
 			for (Unit unit : bwapi.getMyUnits()) {
 				if (unit.getType() == UnitTypes.Terran_Marine && unit.isIdle()) {
 					unit.attack(enemy.getPostition(), false);
 				}
 				if (unit.getType() == UnitTypes.Terran_Medic && unit.isIdle()) {
-					unit.move(???, false);
+					unit.move(??.getPostition(), false);
 				}
+		}
+
+		//if you have less than 2 siege tanks, and have the resources/Factory, make a siege tank
+		if (TerranTank_Count < 2) {
+			for (Unit unit : bwapi.getMyUnits()) {
+				if (unit.getType() == UnitTypes.Terran_Factory && bwapi.getSelf().getMinerals() >= 150 && bwapi.getSelf().getGas() >=100) {
+					unit.train(UnitTypes.Terran_Siege_Tank_Tank_Mode);
+					TerranTank_Count ++;
 		}
 
 
