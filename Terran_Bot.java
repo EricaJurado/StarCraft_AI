@@ -18,9 +18,8 @@ import jnibwapi.types.UnitType.UnitTypes;
 import jnibwapi.Map;
 import jnibwapi.util.BWColor;
 import jnibwapi.Player;
-import jnibwapi.BWAPIEventListener;
 
-public class Testing implements BWAPIEventListener {
+public class Terran_Bot implements BWAPIEventListener {
 	private final JNIBWAPI bwapi;
 	
 	/** used for mineral splits */
@@ -32,14 +31,15 @@ public class Testing implements BWAPIEventListener {
 	public static int TerranSCV_Count = 4;
 	public static int TerranMarine_Count = 0;
 	public static boolean builtBarracks = false;
-	public static Position myBase;
+	public static Position initEnemyBase = null;
+	
 	
 	public static void main(String[] args) {
-		new Testing();
+		new Terran_Bot();
 	}
 	
-	public Testing() {
-		bwapi = new JNIBWAPI(this, false);
+	public Terran_Bot() {
+		bwapi = new JNIBWAPI(this, true);
 		bwapi.start();
 	}
 	
@@ -62,6 +62,33 @@ public class Testing implements BWAPIEventListener {
 	public void matchFrame() {
 		// build supply depot
 		// TODO: Determine strategy/timing of building depot
+		if (initEnemyBase == null){
+			for (Unit unit : bwapi.getEnemyUnits()){
+				if (unit.getType() == UnitTypes.Zerg_Hatchery){
+					bwapi.drawCircle(unit.getPosition(),5, BWColor.Blue, true, false);
+					initEnemyBase = unit.getPosition();
+				}
+				if (unit.getType() == UnitTypes.Protoss_Nexus){
+					bwapi.drawCircle(unit.getPosition(),5, BWColor.Green, true, false);
+					initEnemyBase = unit.getPosition();
+				}
+				if (unit.getType() == UnitTypes.Terran_Command_Center){
+					bwapi.drawCircle(unit.getPosition(),5, BWColor.Red, true, false);
+					initEnemyBase = unit.getPosition();
+				}
+			}
+		}
+		
+		for (Unit unit : bwapi.getMyUnits()) {
+			if (unit.getType() == UnitTypes.Terran_SCV && unit.isIdle()) {
+				for (Unit enemy : bwapi.getEnemyUnits()) {
+					unit.attack(enemy.getPosition(), false);
+					break;
+				}
+			}
+		}
+		
+		/*
 		for (Unit unit : bwapi.getMyUnits()) {
 			// if unit type is SCV and minerals >= 100, build supply depot in nearby available location
 			if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 100) {
@@ -86,6 +113,7 @@ public class Testing implements BWAPIEventListener {
 				}
 			}
 		}
+		*/
 		
 		// if marine count is less than 4 and we have barracks, build another marine
 		if (TerranMarine_Count < 4){
@@ -134,46 +162,7 @@ public class Testing implements BWAPIEventListener {
 			}
 		}
 	}
-	
-	//TODO: build choke points
-	
-	// TODO: Offset to not block minerals
-	// TODO: Building in proper location (radius?)
-	public Position getSuitablePos (Unit builder, UnitType buildingType, Position pos){
-		Position finalPos = null;
-		int maxDist = 3;
-		int stopDist = 40;
-		
-		while ((maxDist < stopDist) && (null == finalPos)){
-			for (int i=pos.getPX()-maxDist; i <=pos.getPX()+maxDist; i++){
-				for (int j=pos.getPY()-maxDist; j<=pos.getPY()+maxDist; j++) {
-					if (bwapi.canBuildHere(builder, pos, buildingType, false)){
-						boolean unitsInWay = false;
-						for (Unit unit : bwapi.getAllUnits()) {
-							if (unit.getID() == builder.getID()) {
-								continue;
-							}
-							if ((Math.abs(unit.getPosition().getPX()-i) < 4 ) && (Math.abs(unit.getPosition().getPY()-j) < 4)) {
-								unitsInWay = true;
-							}
-						}
-						if (!unitsInWay) {
-							return new Position(i,j);
-						}
-					}
-					Position test = new Position(i,j);
-					bwapi.drawCircle(test, 5, BWColor.Red, true, false);
-				}
-			}
-			maxDist += 2;
-		}
-		
-		if (null == finalPos) {
-			System.out.println("Can't find suitable building position for " + buildingType.toString());
-		}
-		
-		return finalPos;
-	}
+
 
 	
 	@Override
