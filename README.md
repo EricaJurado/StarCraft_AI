@@ -1,67 +1,72 @@
 # StarCraft_AI
 
+**Strategy Overview (TvP)** (Derivation of the Siege Expand)
 
+Begin by building SCVs whenever resources allow
 
-
-
-
-**Strategy Overview (Chokepoint yes)**
-
-Additional SCVs are built when resources are available for a total of 10 (begin with 4)
-
-The following buildings are built as their preconditions (including resource amounts) are met:
+if (supplyUsed == 9 && supplyDepot_Count < 1) {build Supply Depot near ramp; supplyDepot_Count++}
     
-   -Supply Depots are built when the unit cap is reached.
-   
-        -Supply Depots raise the total number of units we can have.
-   
-   -A Barrack is built as soon as possible after the 10th SCV.
-   
-        -Barrack train Marines and Medics.
-     
-   -Once the barrack is built, an academy is built 
-   
-        -Academy allows us to build Medics.
-   
-   -Once the barrack is built, 2 Bunkers are built flanking the checkpoint 
-   
-        -Two bunkers flank the chokepoint to make a funnel
-        -Marines and Medics will go in these bunkers to fire into the chokepoint
-   
-   -Once the academy is built,  factory is built
-   
-        -Factories allow us to build Vultures and Siege Tanks
-   
-   -Once a factory is built, a machine shop is built 
-   
-        -Machine Shops allow factories to build Siege Tanks
-   
-   -Once a machine shop is built, another factory and machine shop are built
-   
-   
-   
-The following units are built as preconditions (including resource amounts) are met:
-   
-   -Marines are built once there is a barracks. Three marines are built at a time.
-   
-   -Once three marines are built, one medic is built.
-   
-        -These four units are then placed in an array/list so they can be treated as a group [called M&M]
-        
-        -This build order of three marines and one medic then restarts
-     
-        -2 M&Ms enter empty bunkers; if there are no empty bunkers, they will cheese the enemy base
-    
-   -Once the Factory is built, build Vultures
-   
-        -Once two Vultures are built, they cheese the enemy 
-   
-   -Once the Machine Shop is built, build Siege Tanks
-   
-   -Once two Siege Tanks are built and the either
-    
-    
-**Strategy Overview (Chokepoint no)**
+if (supplyUsed == 12 && !builtBarracks) {build a barracks near ramp; build refinery; builtBarracks = true}   
 
-Additional SCVs are built when resources are available for a total of 10 (begin with 4)
+if (builtBarracks && marine_count != 4) {build marines, marine_count++ with each}
+
+if (marine_count = 4 && !builtBunker) {build bunker in middle of chokepoint; move four marines to it; builtBunker = true}
+
+if (supplyUsed == 15 && supplyDepot_Count < 2) {build Supply Depot near ramp; supplyDepot_Count++}
+    
+if (supplyUsed == 16 && factory_Count < 1) {build factory; factory_Count++}
+    
+if (factory is finished) {build machine shop}
+
+when (machine shop is finished) {build one siege tank; move tank behind bunker}
+
+if (supplyUsed == 24) {build supply depot}
+
+if (supplyUsed == 25) {research Siege Mode; haveSiege = true}
+
+if (haveSiege) {set tank in chokepoint to siege mode}
+
+if (supplyUsed == 28) {build second factory}
+
+if (int supplyTotal - in supplyUsed =< 1) {build supply depot; supplyDepot_Coutn++}
+
+    -From here, stop making SCVs, and only make Siege Tanks (fac w/ MS) and Vultures (fac w/o)
+
+when (second factory is done) {make third}
+
+when (third factory is done) {give third machine shop}
+
+when (machine shop is done) {build fourth}
+
+When six tanks are done, we attack with all tanks and vultures, and have all four factories pump out vultures
+
+
+
+**Strategy Overview (TvZ)** (1.5 rax)
+
+Begin by building SCVs whenever resources allow
+
+if (supplyUsed == 9) {build supply depot}
+
+if (supplyUsed == 11) {build barracks}
+
+if (supplyUsed == 15) {build supply depot}
+
+if (supplyUsed == 22) {supply depot}
+
+if (supplyUsed == 23) {refinery}
+
+if (supplyUsed == 25) {bunker in chokepoint}
+
+if (supplyUsed == 30) {academy}
+
+when (academy is built) {research stim pack}
+
+if (supplyUsed == 32) {barracks}
+
+if (supplyUsed == 35) {barracks}
+    
+if (supplyUsed == 40) {2 barracks, supply depot}
+
+When you have at least 16 marines and 4 medics, attack.
 
