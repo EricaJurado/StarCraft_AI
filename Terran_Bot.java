@@ -38,6 +38,8 @@ public class Terran_Bot implements BWAPIEventListener {
 	public static boolean builtBarracks = false;
 	public static Position initEnemyBase = null;
 	public static ArrayList<Unit> underConstruction = new ArrayList<Unit>();
+	public static String enemyType = "";
+	public static boolean determinedEnemy = false;
 
 	public static void main(String[] args) {
 		new Terran_Bot();
@@ -65,9 +67,32 @@ public class Terran_Bot implements BWAPIEventListener {
 
 	@Override
 	public void matchFrame() {
+		// Determine enemy type and init location of enemy base
+		if (false == determinedEnemy){
+			if (initEnemyBase == null){
+				for (Unit unit : bwapi.getEnemyUnits()){
+					if (unit.getType() == UnitTypes.Zerg_Hatchery){
+						bwapi.drawCircle(unit.getPosition(),5, BWColor.Blue, true, false);
+						initEnemyBase = unit.getPosition();
+						enemyType = "zerg";
+					}
+					if (unit.getType() == UnitTypes.Protoss_Nexus){
+						bwapi.drawCircle(unit.getPosition(),5, BWColor.Green, true, false);
+						initEnemyBase = unit.getPosition();
+						enemyType = "protoss";
+					}
+					if (unit.getType() == UnitTypes.Terran_Command_Center){
+						bwapi.drawCircle(unit.getPosition(),5, BWColor.Red, true, false);
+						initEnemyBase = unit.getPosition();
+						enemyType = "terran";
+					}
+				}
+			}
+			determinedEnemy = true;
+		}
 
+		
 		builtBarracks = false;
-
 		for (Unit unit : bwapi.getMyUnits()){
 			if (unit.getType() == UnitTypes.Terran_SCV) {
 				TerranSCV_Count ++;
@@ -196,25 +221,9 @@ public class Terran_Bot implements BWAPIEventListener {
 		//When eight tanks are done, we attack with all tanks and vultures, and have all four factories pump out vultures
 
 		//<------------------------------------------------------>
-
+		// 				OLD CODE
 		// build supply depot
 		// TODO: Determine strategy/timing of building depot
-		if (initEnemyBase == null){
-			for (Unit unit : bwapi.getEnemyUnits()){
-				if (unit.getType() == UnitTypes.Zerg_Hatchery){
-					bwapi.drawCircle(unit.getPosition(),5, BWColor.Blue, true, false);
-					initEnemyBase = unit.getPosition();
-				}
-				if (unit.getType() == UnitTypes.Protoss_Nexus){
-					bwapi.drawCircle(unit.getPosition(),5, BWColor.Green, true, false);
-					initEnemyBase = unit.getPosition();
-				}
-				if (unit.getType() == UnitTypes.Terran_Command_Center){
-					bwapi.drawCircle(unit.getPosition(),5, BWColor.Red, true, false);
-					initEnemyBase = unit.getPosition();
-				}
-			}
-		}
 
 		for (Unit unit : bwapi.getMyUnits()) {
 			if (unit.getType() == UnitTypes.Terran_SCV && unit.isIdle()) {
