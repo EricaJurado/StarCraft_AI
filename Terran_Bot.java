@@ -18,50 +18,187 @@ import jnibwapi.types.UnitType.UnitTypes;
 import jnibwapi.Map;
 import jnibwapi.util.BWColor;
 import jnibwapi.Player;
-import jnibwapi.BWAPIEventListener;
 
-public class Testing implements BWAPIEventListener {
+public class Terran_Bot implements BWAPIEventListener {
 	private final JNIBWAPI bwapi;
-	
+
 	/** used for mineral splits */
 	private final HashSet<Unit> claimedMinerals = new HashSet<>();
-	
+
 	/** when should the next overlord be spawned? */
 	private int supplyCap;
-	
-	public static int TerranSCV_Count = 4;
+
+	public static int TerranSCV_Count = 0;
 	public static int TerranMarine_Count = 0;
+	public static int Tank_Count = 0;
+	public static int Vulture_Count = 0;
+	public static int Factory_Count = 0;
+	public static int SupplyDepot_Count = 0;
 	public static boolean builtBarracks = false;
-	public static Position myBase;
-	
+	public static Position initEnemyBase = null;
+
+
 	public static void main(String[] args) {
-		new Testing();
+		new Terran_Bot();
 	}
-	
-	public Testing() {
-		bwapi = new JNIBWAPI(this, false);
+
+	public Terran_Bot() {
+		bwapi = new JNIBWAPI(this, true);
 		bwapi.start();
 	}
-	
+
 	@Override
 	public void connected() {}
-	
+
 	@Override
 	public void matchStart() {
 		bwapi.enableUserInput();
 		bwapi.enablePerfectInformation();
 		bwapi.setGameSpeed(0);
-		
+
 		// reset agent state
 		claimedMinerals.clear();
-		supplyCap = 0;	
-		
+		supplyCap = 0;
+
 	}
-	
+
 	@Override
 	public void matchFrame() {
+
+		builtBarracks = false;
+
+		for (Unit myUnit : bwapi.getMyUnits()){
+			if (unit.getType() == UnitTypes.Terran_SCV) {
+				TerranSCV_Count ++;
+			} else if (unit.getType() == UnitTypes.Terran_Marine) {
+				TerranMarine_Count ++;
+			} else if (unit.getType() == UnitTypes.Terran_Siege_Tank_Tank_Mode){
+				Tank_Count ++;
+			} else if (unit.getType() == UnitTypes.Terran_Vulture)
+				Vulture_Count ++;
+			} else if (unit.getTypes() == UnitTypes.Terran_Factory){
+				Factory_Count ++;
+			} else if (unit.getTypes() == UnitTypes.Terran_Supply_Depot){
+				SupplyDepot_Count ++;
+			} else if (unit.getTypes() == UnitTypes.Terran_Barracks){
+				builtBarracks == true;
+			}
+		}
+
+		/*
+		if ( 9 == bwapi.getPlayer().supplyUsed() && SupplyDepot_Count <1){
+			//build Depot near ramp
+			SupplyDepot_Count ++;
+		}
+
+		if (12 == bwapi.getPlayer().supplyUsed() && !builtBarracks){
+			//build barracks near ramp
+			//build refinery
+			builtBarracks = true;
+		}
+
+		// check-- want !=4 or not groups of 4?
+		if (builtBarracks && Marine_Count!=4) {
+			// build marines
+			Marine_Count ++;
+		}
+
+		if (Marine_Count == 4 && !builtBunker){
+			//build bunker in middle of chokepoint
+			//move 4 marines to it
+			builtBunker = true;
+		}
+
+		if (15 == bwapi.getPlayer().supplyUsed() && SupplyDepot_Count < 2) {
+			//build Supply Depot near ramp
+			supplyDepot_Count++;
+		}
+
+		if (16 == bwapi.getPlayer().supplyUsed() && Factory_Count < 1) {
+			//build factory
+			Factory_Count++;
+		}
+
+		// look in doc to see how to check what you're still building
+		if (factory is finished) {
+			build machine shop
+		}
+
+		when (machine shop is finished) {
+			build one siege tank
+			move tank behind bunker
+		}
+
+		if (24 == bwapi.getPlayer().supplyUsed()) {
+			build supply depot
+		}
+
+		if (25 == bwapi.getPlayer().supplyUsed()) {
+			research Siege Mode;
+			haveSiege = true
+		}
+
+		if (haveSiege) {
+			set tank in chokepoint to siege mode
+		}
+
+		if (28 == bwapi.getPlayer().supplyUsed()) {
+			build second factory
+		}
+
+		// check
+		if (int supplyTotal - in supplyUsed =< 1) {
+			build supply depot
+			supplyDepot_Coutn++
+		}
+
+		//From here, stop making SCVs, and only make Siege Tanks (fac w/ MS) and Vultures (fac w/o)
+		when (second factory is done) {
+			make third
+		}
+
+		when (third factory is done) {
+			give third machine shop
+		}
+
+		when (machine shop is done) {
+			build fourth
+		}
+
+		When eight tanks are done, we attack with all tanks and vultures, and have all four factories pump out vultures
+
+		<------------------------------------------------------>
+		*/
+
 		// build supply depot
 		// TODO: Determine strategy/timing of building depot
+		if (initEnemyBase == null){
+			for (Unit unit : bwapi.getEnemyUnits()){
+				if (unit.getType() == UnitTypes.Zerg_Hatchery){
+					bwapi.drawCircle(unit.getPosition(),5, BWColor.Blue, true, false);
+					initEnemyBase = unit.getPosition();
+				}
+				if (unit.getType() == UnitTypes.Protoss_Nexus){
+					bwapi.drawCircle(unit.getPosition(),5, BWColor.Green, true, false);
+					initEnemyBase = unit.getPosition();
+				}
+				if (unit.getType() == UnitTypes.Terran_Command_Center){
+					bwapi.drawCircle(unit.getPosition(),5, BWColor.Red, true, false);
+					initEnemyBase = unit.getPosition();
+				}
+			}
+		}
+
+		for (Unit unit : bwapi.getMyUnits()) {
+			if (unit.getType() == UnitTypes.Terran_SCV && unit.isIdle()) {
+				for (Unit enemy : bwapi.getEnemyUnits()) {
+					unit.attack(enemy.getPosition(), false);
+					break;
+				}
+			}
+		}
+
+		/*
 		for (Unit unit : bwapi.getMyUnits()) {
 			// if unit type is SCV and minerals >= 100, build supply depot in nearby available location
 			if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 100) {
@@ -72,7 +209,7 @@ public class Testing implements BWAPIEventListener {
 				break;
 			}
 		}
-		
+
 		// if we haven't already built barracks and we have a scv unit available, spend 250 minerals to build barracks
 		if (!builtBarracks){
 			for (Unit unit : bwapi.getMyUnits()) {
@@ -86,7 +223,8 @@ public class Testing implements BWAPIEventListener {
 				}
 			}
 		}
-		
+		*/
+
 		// if marine count is less than 4 and we have barracks, build another marine
 		if (TerranMarine_Count < 4){
 			for (Unit unit : bwapi.getMyUnits()) {
@@ -96,7 +234,7 @@ public class Testing implements BWAPIEventListener {
 				}
 			}
 		}
-		
+
 		// spawn a unit?
 		// if scv counter is less than 6, build another scv
 		if (TerranSCV_Count < 6){
@@ -107,75 +245,36 @@ public class Testing implements BWAPIEventListener {
 				}
 			}
 		}
-	
-		
+
+
 		// collect minerals
 		// currently all (idle) scv units near minerals will collect minerals
 		for (Unit unit : bwapi.getMyUnits()) {
-			
+
 			if (unit.getType() == UnitTypes.Terran_SCV) {
-				
+
 				if (unit.isIdle()) {
 					for (Unit minerals : bwapi.getNeutralUnits()){
 						if (minerals.getType().isMineralField()){
 							double dist = unit.getDistance(minerals);
-							
+
 							if (dist < 300) {
 								unit.rightClick(minerals, false);
 								claimedMinerals.add(minerals);
 								break;
 							}
 						}
-						
+
 					}
-					
+
 				}
-				
+
 			}
 		}
-	}
-	
-	//TODO: build choke points
-	
-	// TODO: Offset to not block minerals
-	// TODO: Building in proper location (radius?)
-	public Position getSuitablePos (Unit builder, UnitType buildingType, Position pos){
-		Position finalPos = null;
-		int maxDist = 3;
-		int stopDist = 40;
-		
-		while ((maxDist < stopDist) && (null == finalPos)){
-			for (int i=pos.getPX()-maxDist; i <=pos.getPX()+maxDist; i++){
-				for (int j=pos.getPY()-maxDist; j<=pos.getPY()+maxDist; j++) {
-					if (bwapi.canBuildHere(builder, pos, buildingType, false)){
-						boolean unitsInWay = false;
-						for (Unit unit : bwapi.getAllUnits()) {
-							if (unit.getID() == builder.getID()) {
-								continue;
-							}
-							if ((Math.abs(unit.getPosition().getPX()-i) < 4 ) && (Math.abs(unit.getPosition().getPY()-j) < 4)) {
-								unitsInWay = true;
-							}
-						}
-						if (!unitsInWay) {
-							return new Position(i,j);
-						}
-					}
-					Position test = new Position(i,j);
-					bwapi.drawCircle(test, 5, BWColor.Red, true, false);
-				}
-			}
-			maxDist += 2;
-		}
-		
-		if (null == finalPos) {
-			System.out.println("Can't find suitable building position for " + buildingType.toString());
-		}
-		
-		return finalPos;
 	}
 
-	
+
+
 	@Override
 	public void keyPressed(int keyCode) {}
 	@Override
