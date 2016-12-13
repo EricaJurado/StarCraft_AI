@@ -67,21 +67,21 @@ public class Terran_Bot implements BWAPIEventListener {
 
 		builtBarracks = false;
 
-		for (Unit myUnit : bwapi.getMyUnits()){
+		for (Unit unit : bwapi.getMyUnits()){
 			if (unit.getType() == UnitTypes.Terran_SCV) {
 				TerranSCV_Count ++;
 			} else if (unit.getType() == UnitTypes.Terran_Marine) {
 				TerranMarine_Count ++;
 			} else if (unit.getType() == UnitTypes.Terran_Siege_Tank_Tank_Mode){
 				Tank_Count ++;
-			} else if (unit.getType() == UnitTypes.Terran_Vulture)
+			} else if (unit.getType() == UnitTypes.Terran_Vulture){
 				Vulture_Count ++;
-			} else if (unit.getTypes() == UnitTypes.Terran_Factory){
+			} else if (unit.getType() == UnitTypes.Terran_Factory){
 				Factory_Count ++;
-			} else if (unit.getTypes() == UnitTypes.Terran_Supply_Depot){
+			} else if (unit.getType() == UnitTypes.Terran_Supply_Depot){
 				SupplyDepot_Count ++;
-			} else if (unit.getTypes() == UnitTypes.Terran_Barracks){
-				builtBarracks == true;
+			} else if (unit.getType() == UnitTypes.Terran_Barracks){
+				builtBarracks = true;
 			}
 		}
 
