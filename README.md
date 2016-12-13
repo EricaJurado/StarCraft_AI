@@ -38,7 +38,7 @@ when (third factory is done) {give third machine shop}
 
 when (machine shop is done) {build fourth}
 
-When six tanks are done, we attack with all tanks and vultures, and have all four factories pump out vultures
+When eight tanks are done, we attack with all tanks and vultures, and have all four factories pump out vultures
 
 
 
