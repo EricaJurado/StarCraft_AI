@@ -1,5 +1,6 @@
 package bot;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class Terran_Bot implements BWAPIEventListener {
 	public static int SupplyDepot_Count = 0;
 	public static boolean builtBarracks = false;
 	public static Position initEnemyBase = null;
-
+	public static ArrayList<Unit> underConstruction = new ArrayList<Unit>();
 
 	public static void main(String[] args) {
 		new Terran_Bot();
@@ -83,6 +84,10 @@ public class Terran_Bot implements BWAPIEventListener {
 			} else if (unit.getType() == UnitTypes.Terran_Barracks){
 				builtBarracks = true;
 			}
+			
+			if (true == unit.isBeingConstructed()){
+				underConstruction.add(unit);
+			}
 		}
 
 		/*
@@ -97,12 +102,19 @@ public class Terran_Bot implements BWAPIEventListener {
 			builtBarracks = true;
 		}
 
+		 */
+		
 		// check-- want !=4 or not groups of 4?
-		if (builtBarracks && Marine_Count!=4) {
-			// build marines
-			Marine_Count ++;
+		if (builtBarracks && TerranMarine_Count!=4) {
+			for (Unit unit : bwapi.getMyUnits()) {
+				if (unit.getType() == UnitTypes.Terran_Barracks && bwapi.getSelf().getMinerals() >= 50 ) {
+					unit.train(UnitTypes.Terran_Marine);
+					TerranMarine_Count ++;
+				}
+			}
+			TerranMarine_Count ++;
 		}
-
+		/*
 		if (Marine_Count == 4 && !builtBunker){
 			//build bunker in middle of chokepoint
 			//move 4 marines to it
@@ -120,11 +132,30 @@ public class Terran_Bot implements BWAPIEventListener {
 		}
 
 		// look in doc to see how to check what you're still building
-		if (factory is finished) {
+		 */
+		
+		boolean factoryFinished = true;
+		for (Unit building : underConstruction){
+			if ( UnitTypes.Terran_Factory == building.getType()){
+				factoryFinished = false;
+			}
+		}
+		
+		/*
+		if (factoryFinished) {
 			build machine shop
 		}
-
-		when (machine shop is finished) {
+		*/
+		
+		boolean machineShopFinished = true;
+		for (Unit building : underConstruction){
+			if ( UnitTypes.Terran_Machine_Shop == building.getType()){
+				machineShopFinished  = false;
+			}
+		}
+		
+		/*
+		if (machineShopFinished) {
 			build one siege tank
 			move tank behind bunker
 		}
@@ -138,7 +169,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			haveSiege = true
 		}
 
-		if (haveSiege) {
+		if (0 < Tank_Count) {
 			set tank in chokepoint to siege mode
 		}
 
@@ -149,26 +180,22 @@ public class Terran_Bot implements BWAPIEventListener {
 		// check
 		if (int supplyTotal - in supplyUsed =< 1) {
 			build supply depot
-			supplyDepot_Coutn++
+			supplyDepot_Count++
 		}
+		*/
 
 		//From here, stop making SCVs, and only make Siege Tanks (fac w/ MS) and Vultures (fac w/o)
-		when (second factory is done) {
-			make third
+		if (machineShopFinished){
+			if (Factory_Count == 2){
+			// 	when second factory is done make third
+			} else if (Factory_Count == 3 ){
+			//	when third factory is done make fourth
+			}
 		}
 
-		when (third factory is done) {
-			give third machine shop
-		}
+		//When eight tanks are done, we attack with all tanks and vultures, and have all four factories pump out vultures
 
-		when (machine shop is done) {
-			build fourth
-		}
-
-		When eight tanks are done, we attack with all tanks and vultures, and have all four factories pump out vultures
-
-		<------------------------------------------------------>
-		*/
+		//<------------------------------------------------------>
 
 		// build supply depot
 		// TODO: Determine strategy/timing of building depot
