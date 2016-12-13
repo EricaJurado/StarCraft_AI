@@ -80,3 +80,5 @@ Continue making marines and attacking
 
 if (medic_Count < 5) {build medic}
 
+if (marines are in the opponents chokepoint) {build bunker in middle of this choke; four marines enter it}
+
