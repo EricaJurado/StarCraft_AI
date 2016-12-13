@@ -58,6 +58,10 @@ if (supplyUsed == 23) {refinery}
 
 if (supplyUsed == 25) {bunker in chokepoint}
 
+when (bunker is built) {stop building SCVs; begin building marines}
+
+if (marine_Count = 4) {put 4 marines in bunker}
+
 if (supplyUsed == 30) {academy}
 
 when (academy is built) {research stim pack}
@@ -68,5 +72,11 @@ if (supplyUsed == 35) {barracks}
     
 if (supplyUsed == 40) {2 barracks, supply depot}
 
-When you have at least 16 marines and 4 medics, attack.
+if (marine_Count => 20) {build medics}
+
+When you have at least 20 marines and 5 medics, attack with all except marines in bunker.
+
+Continue making marines and attacking
+
+if (medic_Count < 5) {build medic}
 
