@@ -1,24 +1,24 @@
-package bot;
+﻿package bot;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+		import java.util.HashSet;
+		import java.util.List;
 
 /**
  * Example of a Java AI Client that does nothing.
  */
-import jnibwapi.BWAPIEventListener;
-import jnibwapi.BaseLocation;
-import jnibwapi.ChokePoint;
-import jnibwapi.JNIBWAPI;
-import jnibwapi.Position;
-import jnibwapi.Position.PosType;
-import jnibwapi.Unit;
-import jnibwapi.types.UnitType;
-import jnibwapi.types.UnitType.UnitTypes;
-import jnibwapi.Map;
-import jnibwapi.util.BWColor;
-import jnibwapi.Player;
+		import jnibwapi.BWAPIEventListener;
+		import jnibwapi.BaseLocation;
+		import jnibwapi.ChokePoint;
+		import jnibwapi.JNIBWAPI;
+		import jnibwapi.Position;
+		import jnibwapi.Position.PosType;
+		import jnibwapi.Unit;
+		import jnibwapi.types.UnitType;
+		import jnibwapi.types.UnitType.UnitTypes;
+		import jnibwapi.Map;
+		import jnibwapi.util.BWColor;
+		import jnibwapi.Player;
+
 
 public class Terran_Bot implements BWAPIEventListener {
 	private final JNIBWAPI bwapi;
@@ -29,17 +29,13 @@ public class Terran_Bot implements BWAPIEventListener {
 	/** when should the next overlord be spawned? */
 	private int supplyCap;
 
-	public static int TerranSCV_Count = 0;
+	public static int TerranSCV_Count = 4;
 	public static int TerranMarine_Count = 0;
-	public static int Tank_Count = 0;
-	public static int Vulture_Count = 0;
-	public static int Factory_Count = 0;
-	public static int SupplyDepot_Count = 0;
 	public static boolean builtBarracks = false;
-	public static Position initEnemyBase = null;
-	public static ArrayList<Unit> underConstruction = new ArrayList<Unit>();
-	public static String enemyType = "";
-	public static boolean determinedEnemy = false;
+	public static Position myBase;
+	public static BaseLocation baseLocation;
+	public static Position initEnemybasePosition = null;
+	public static Position initBasePosition = null;
 
 	public static void main(String[] args) {
 		new Terran_Bot();
@@ -67,199 +63,58 @@ public class Terran_Bot implements BWAPIEventListener {
 
 	@Override
 	public void matchFrame() {
-		// Determine enemy type and init location of enemy base
-		if (false == determinedEnemy){
-			if (initEnemyBase == null){
-				for (Unit unit : bwapi.getEnemyUnits()){
-					if (unit.getType() == UnitTypes.Zerg_Hatchery){
-						bwapi.drawCircle(unit.getPosition(),5, BWColor.Blue, true, false);
-						initEnemyBase = unit.getPosition();
-						enemyType = "zerg";
-					}
-					if (unit.getType() == UnitTypes.Protoss_Nexus){
-						bwapi.drawCircle(unit.getPosition(),5, BWColor.Green, true, false);
-						initEnemyBase = unit.getPosition();
-						enemyType = "protoss";
-					}
-					if (unit.getType() == UnitTypes.Terran_Command_Center){
-						bwapi.drawCircle(unit.getPosition(),5, BWColor.Red, true, false);
-						initEnemyBase = unit.getPosition();
-						enemyType = "terran";
-					}
-				}
-			}
-			determinedEnemy = true;
-		}
-
-		
-		builtBarracks = false;
-		for (Unit unit : bwapi.getMyUnits()){
-			if (unit.getType() == UnitTypes.Terran_SCV) {
-				TerranSCV_Count ++;
-			} else if (unit.getType() == UnitTypes.Terran_Marine) {
-				TerranMarine_Count ++;
-			} else if (unit.getType() == UnitTypes.Terran_Siege_Tank_Tank_Mode){
-				Tank_Count ++;
-			} else if (unit.getType() == UnitTypes.Terran_Vulture){
-				Vulture_Count ++;
-			} else if (unit.getType() == UnitTypes.Terran_Factory){
-				Factory_Count ++;
-			} else if (unit.getType() == UnitTypes.Terran_Supply_Depot){
-				SupplyDepot_Count ++;
-			} else if (unit.getType() == UnitTypes.Terran_Barracks){
-				builtBarracks = true;
-			}
-			
-			if (true == unit.isBeingConstructed()){
-				underConstruction.add(unit);
-			}
-		}
-
-		/*
-		if ( 9 == bwapi.getPlayer().supplyUsed() && SupplyDepot_Count <1){
-			//build Depot near ramp
-			SupplyDepot_Count ++;
-		}
-
-		if (12 == bwapi.getPlayer().supplyUsed() && !builtBarracks){
-			//build barracks near ramp
-			//build refinery
-			builtBarracks = true;
-		}
-
-		 */
-		
-		// check-- want !=4 or not groups of 4?
-		if (builtBarracks && TerranMarine_Count!=4) {
-			for (Unit unit : bwapi.getMyUnits()) {
-				if (unit.getType() == UnitTypes.Terran_Barracks && bwapi.getSelf().getMinerals() >= 50 ) {
-					unit.train(UnitTypes.Terran_Marine);
-					TerranMarine_Count ++;
-				}
-			}
-			TerranMarine_Count ++;
-		}
-		/*
-		if (Marine_Count == 4 && !builtBunker){
-			//build bunker in middle of chokepoint
-			//move 4 marines to it
-			builtBunker = true;
-		}
-
-		if (15 == bwapi.getPlayer().supplyUsed() && SupplyDepot_Count < 2) {
-			//build Supply Depot near ramp
-			supplyDepot_Count++;
-		}
-
-		if (16 == bwapi.getPlayer().supplyUsed() && Factory_Count < 1) {
-			//build factory
-			Factory_Count++;
-		}
-
-		// look in doc to see how to check what you're still building
-		 */
-		
-		boolean factoryFinished = true;
-		for (Unit building : underConstruction){
-			if ( UnitTypes.Terran_Factory == building.getType()){
-				factoryFinished = false;
-			}
-		}
-		
-		/*
-		if (factoryFinished) {
-			build machine shop
-		}
-		*/
-		
-		boolean machineShopFinished = true;
-		for (Unit building : underConstruction){
-			if ( UnitTypes.Terran_Machine_Shop == building.getType()){
-				machineShopFinished  = false;
-			}
-		}
-		
-		/*
-		if (machineShopFinished) {
-			build one siege tank
-			move tank behind bunker
-		}
-
-		if (24 == bwapi.getPlayer().supplyUsed()) {
-			build supply depot
-		}
-
-		if (25 == bwapi.getPlayer().supplyUsed()) {
-			research Siege Mode;
-			haveSiege = true
-		}
-
-		if (0 < Tank_Count) {
-			set tank in chokepoint to siege mode
-		}
-
-		if (28 == bwapi.getPlayer().supplyUsed()) {
-			build second factory
-		}
-
-		// check
-		if (int supplyTotal - in supplyUsed =< 1) {
-			build supply depot
-			supplyDepot_Count++
-		}
-		*/
-
-		//From here, stop making SCVs, and only make Siege Tanks (fac w/ MS) and Vultures (fac w/o)
-		if (machineShopFinished){
-			if (Factory_Count == 2){
-			// 	when second factory is done make third
-			} else if (Factory_Count == 3 ){
-			//	when third factory is done make fourth
-			}
-		}
-
-		//When eight tanks are done, we attack with all tanks and vultures, and have all four factories pump out vultures
-
-		//<------------------------------------------------------>
-		// 				OLD CODE
 		// build supply depot
 		// TODO: Determine strategy/timing of building depot
-
-		for (Unit unit : bwapi.getMyUnits()) {
-			if (unit.getType() == UnitTypes.Terran_SCV && unit.isIdle()) {
-				for (Unit enemy : bwapi.getEnemyUnits()) {
-					unit.attack(enemy.getPosition(), false);
-					break;
+		if(initEnemybasePosition == null){
+			for(Unit unit : bwapi.getEnemyUnits()){
+				if(unit.getType() == UnitTypes.Zerg_Hatchery){
+					bwapi.drawCircle(unit.getPosition(), 5, BWColor.Blue, true, false);
+					initEnemybasePosition = unit.getPosition();
+				}
+				else if (unit.getType() == UnitTypes.Protoss_Nexus){
+					bwapi.drawCircle(unit.getPosition(), 5, BWColor.Blue, true, false);
+					initEnemybasePosition = unit.getPosition();
+				}
+				else if (unit.getType() == UnitTypes.Terran_Command_Center){
+					bwapi.drawCircle(unit.getPosition(), 5, BWColor.Blue, true, false);
+					initEnemybasePosition = unit.getPosition();
 				}
 			}
 		}
 
-		/*
-		for (Unit unit : bwapi.getMyUnits()) {
-			// if unit type is SCV and minerals >= 100, build supply depot in nearby available location
-			if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 100) {
-				Position buildHere = getSuitablePos(unit, UnitTypes.Terran_Supply_Depot, bwapi.getSelf().getStartLocation());
-				if (null != buildHere) {
-					unit.build(buildHere, UnitTypes.Terran_Supply_Depot);
+		if(initBasePosition == null)
+			for(Unit unit : bwapi.getMyUnits()) {
+				if (unit.getType() == UnitTypes.Terran_Command_Center) {
+					initBasePosition = new Position(unit.getPosition().getBX(), unit.getPosition().getBY(), PosType.BUILD);
 				}
-				break;
 			}
-		}
+
+		System.out.println(initBasePosition.getBX());
+		System.out.println(initBasePosition.getBY());
+
+		bwapi.drawCircle(initBasePosition, 5, BWColor.Cyan, true, false);
 
 		// if we haven't already built barracks and we have a scv unit available, spend 250 minerals to build barracks
 		if (!builtBarracks){
 			for (Unit unit : bwapi.getMyUnits()) {
 				if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 250) {
-					Position buildHere = getSuitablePos(unit, UnitTypes.Terran_Barracks, bwapi.getSelf().getStartLocation());
-					if (null != buildHere) {
+					int differenceX = (initBasePosition.getBX() - initEnemybasePosition.getBX());
+					int differenceY = (initBasePosition.getBY() - initEnemybasePosition.getBY());
+					float magnitude = (float)Math.sqrt(Math.pow(differenceX, 2) + Math.pow(differenceY, 2));
+					float normalizedDifferenceX = differenceX/magnitude;
+					float normalizedDifferenceY = differenceY/magnitude;
+					int distance = 5;
+					int buildHereX = initBasePosition.getBX() - (int)(normalizedDifferenceX * distance);
+					int buildHereY = initBasePosition.getBY() - (int)(normalizedDifferenceY * distance) ;
+					Position buildHere = new Position(buildHereX, buildHereY, PosType.BUILD);
+					bwapi.drawCircle(buildHere, 10, BWColor.Red, true, false);
+					if (null != buildHere && false != bwapi.canBuildHere(buildHere,UnitTypes.Terran_Barracks, true)){
 						unit.build(buildHere, UnitTypes.Terran_Barracks);
-						builtBarracks = true;
+						break;
 					}
-					break;
 				}
 			}
 		}
-		*/
 
 		// if marine count is less than 4 and we have barracks, build another marine
 		if (TerranMarine_Count < 4){
@@ -309,6 +164,7 @@ public class Terran_Bot implements BWAPIEventListener {
 		}
 	}
 
+	//TODO: build choke points
 
 
 	@Override
