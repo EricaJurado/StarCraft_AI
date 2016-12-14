@@ -97,7 +97,7 @@ public class Terran_Bot implements BWAPIEventListener {
 		// if we haven't already built barracks and we have a scv unit available, spend 250 minerals to build barracks
 		if (!builtBarracks){
 			for (Unit unit : bwapi.getMyUnits()) {
-				if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 250) {
+				if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 150) {
 					int differenceX = (initBasePosition.getBX() - initEnemybasePosition.getBX());
 					int differenceY = (initBasePosition.getBY() - initEnemybasePosition.getBY());
 					float magnitude = (float)Math.sqrt(Math.pow(differenceX, 2) + Math.pow(differenceY, 2));
@@ -115,6 +115,8 @@ public class Terran_Bot implements BWAPIEventListener {
 				}
 			}
 		}
+
+
 
 		// if marine count is less than 4 and we have barracks, build another marine
 		if (TerranMarine_Count < 4){
@@ -163,6 +165,31 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 	}
+
+	public Position Spiral(Position pos){
+		for(int x = -2 x <= 2; x++){
+			for(int y = -2; y <= 2; y++){
+				if((x == 0 && y == 0) || Math.abs(x) == 1 || Math.abs(y) == 1){
+					continue;
+				}
+
+				int checkX = pos.getBX() + x;
+				int checkY = pos.getBY() + y;
+
+				new Position point = (checkX, checkY, PosType.BUILD);
+				boolean canBuild = point.canBuild();
+
+				if (canBuild){
+					return point;
+				}
+
+			}
+		}
+
+		return null;
+
+	}
+
 
 	//TODO: build choke points
 
