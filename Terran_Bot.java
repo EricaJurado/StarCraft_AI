@@ -1,23 +1,25 @@
 ﻿package bot;
 
-		import java.util.HashSet;
-		import java.util.List;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Example of a Java AI Client that does nothing.
  */
-		import jnibwapi.BWAPIEventListener;
-		import jnibwapi.BaseLocation;
-		import jnibwapi.ChokePoint;
-		import jnibwapi.JNIBWAPI;
-		import jnibwapi.Position;
-		import jnibwapi.Position.PosType;
-		import jnibwapi.Unit;
-		import jnibwapi.types.UnitType;
-		import jnibwapi.types.UnitType.UnitTypes;
-		import jnibwapi.Map;
-		import jnibwapi.util.BWColor;
-		import jnibwapi.Player;
+import jnibwapi.BWAPIEventListener;
+import jnibwapi.BaseLocation;
+import jnibwapi.ChokePoint;
+import jnibwapi.JNIBWAPI;
+import jnibwapi.Position;
+import jnibwapi.Position.PosType;
+import jnibwapi.Region;
+import jnibwapi.Unit;
+import jnibwapi.types.UnitType;
+import jnibwapi.types.UnitType.UnitTypes;
+import jnibwapi.Map;
+import jnibwapi.util.BWColor;
+import jnibwapi.Player;
 
 
 public class Terran_Bot implements BWAPIEventListener {
@@ -29,13 +31,23 @@ public class Terran_Bot implements BWAPIEventListener {
 	/** when should the next overlord be spawned? */
 	private int supplyCap;
 
-	public static int TerranSCV_Count = 4;
+	public static int TerranSCV_Count = 0;
 	public static int TerranMarine_Count = 0;
+	public static int Tank_Count = 0;
+	public static int Vulture_Count = 0;
+	public static int Factory_Count = 0;
+	public static int SupplyDepot_Count = 0;
+
 	public static boolean builtBarracks = false;
-	public static Position myBase;
+
 	public static BaseLocation baseLocation;
+
+	public static Position myBase;
 	public static Position initEnemybasePosition = null;
 	public static Position initBasePosition = null;
+	public static Position closestCP = null;
+	public static Position r1 = null;
+	public static Position r2 = null;
 
 	public static void main(String[] args) {
 		new Terran_Bot();
@@ -82,17 +94,20 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
-		if(initBasePosition == null)
+		if(initBasePosition == null) {
 			for(Unit unit : bwapi.getMyUnits()) {
 				if (unit.getType() == UnitTypes.Terran_Command_Center) {
-					initBasePosition = new Position(unit.getPosition().getBX(), unit.getPosition().getBY(), PosType.BUILD);
+					initBasePosition = unit.getPosition();
 				}
 			}
+			
+			List<Position> choke = artichoke();
+			closestCP = choke.get(0);
+			r1 = choke.get(1);
+			r2 = choke.get(2);
+		}
 
-		System.out.println(initBasePosition.getBX());
-		System.out.println(initBasePosition.getBY());
-
-		bwapi.drawCircle(initBasePosition, 5, BWColor.Cyan, true, false);
+		bwapi.drawCircle(closestCP, 5, BWColor.Cyan, true, false);
 
 		// if we haven't already built barracks and we have a scv unit available, spend 250 minerals to build barracks
 		if (!builtBarracks){
@@ -111,6 +126,8 @@ public class Terran_Bot implements BWAPIEventListener {
 					if (null != buildHere && false != bwapi.canBuildHere(buildHere,UnitTypes.Terran_Barracks, true)){
 						unit.build(buildHere, UnitTypes.Terran_Barracks);
 						break;
+					} else {
+						Spiral(buildHere);
 					}
 				}
 			}
@@ -166,28 +183,92 @@ public class Terran_Bot implements BWAPIEventListener {
 		}
 	}
 
-	public Position Spiral(Position pos){
-		for(int x = -2 x <= 2; x++){
-			for(int y = -2; y <= 2; y++){
-				if((x == 0 && y == 0) || Math.abs(x) == 1 || Math.abs(y) == 1){
-					continue;
-				}
-
-				int checkX = pos.getBX() + x;
-				int checkY = pos.getBY() + y;
-
-				new Position point = (checkX, checkY, PosType.BUILD);
-				boolean canBuild = point.canBuild();
-
-				if (canBuild){
-					return point;
-				}
-
+	public List<Position> artichoke(){
+		List<Region> regions = bwapi.getMap().getRegions();
+		List<ChokePoint> chokepoints = bwapi.getMap().getChokePoints();
+		List<Position> regionPos = new ArrayList<Position>(regions.size());
+		List<Position> chokePos = new ArrayList<Position>(chokepoints.size());
+		for (Region r : regions){
+			Position p = r.getCenter();
+			regionPos.add(p);
+		}
+		
+		Position closestR = null; //closest region pos to my start pos
+		double smallestDist = -1;
+		int smallestIndexR = 0;
+		int	index = 0;
+		for (Position rp : regionPos){
+			double diffX = Math.abs(initBasePosition.getPX() - rp.getPX());
+			double diffY = Math.abs(initBasePosition.getPY() - rp.getPY());
+			double Z = Math.sqrt((diffX*diffX+diffY*diffY));
+			if (Z<= smallestDist || smallestDist == -1){
+				smallestDist = Z;
+				closestR = rp;
+				smallestIndexR = index;
 			}
+			index ++;
+		}
+		
+		for (ChokePoint cp : chokepoints){
+			Position p = cp.getCenter();
+			chokePos.add(p);
 		}
 
-		return null;
+		Position closestCP = null;
+		smallestDist = -1;
+		int smallestIndexCP = 0;
+		index = 0;
+		for (Position cp : chokePos){
+			double diffX = Math.abs(initBasePosition.getPX() - cp.getPX());
+			double diffY = Math.abs(initBasePosition.getPY() - cp.getPY());
+			double Z = Math.sqrt((diffX*diffX+diffY*diffY));
+			if (Z<= smallestDist || smallestDist == -1){
+				smallestDist = Z;
+				closestCP = cp;
+				smallestIndexCP = index;
+			}
+			index ++;
+		}
 
+		Position r1 = chokepoints.get(smallestIndexCP).getFirstSide();
+		Position r2 = chokepoints.get(smallestIndexCP).getSecondSide();
+		bwapi.drawCircle(r1,5, BWColor.Red, true, false);
+		bwapi.drawCircle(r2, 5, BWColor.Green, true, false);
+		bwapi.drawCircle(closestCP, 5, BWColor.White, true, false);
+		bwapi.drawCircle(closestR, 5, BWColor.Orange, true, false);
+		
+		List<Position> cp = new ArrayList<Position>(3);
+		cp.add(closestCP);
+		cp.add(r1);
+		cp.add(r2);
+		
+		return cp;
+	}
+
+	public Position Spiral(Position pos){
+		int radius = 2;
+		boolean canBuild = false;
+		Position point = null;
+		
+		while (!canBuild){
+			for(int x = -radius; x <= radius; x++){
+				for(int y = -radius; y <= radius; y++){
+					if((x == 0 && y == 0) || Math.abs(x) == 1 || Math.abs(y) == 1){
+						continue;
+					}
+	
+					int checkX = pos.getBX() + x;
+					int checkY = pos.getBY() + y;
+	
+					point = new Position (checkX, checkY, PosType.BUILD);
+					canBuild = bwapi.getMap().isBuildable(point);
+	
+				}
+			}
+			radius = radius + 2;
+		}
+		
+		return point;
 	}
 
 
