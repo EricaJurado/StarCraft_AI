@@ -1,25 +1,25 @@
 ﻿package bot;
 
-		import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.HashSet;
-		import java.util.List;
+import java.util.List;
 
 /**
  * Example of a Java AI Client that does nothing.
  */
-		import jnibwapi.BWAPIEventListener;
-		import jnibwapi.BaseLocation;
-		import jnibwapi.ChokePoint;
-		import jnibwapi.JNIBWAPI;
-		import jnibwapi.Position;
-		import jnibwapi.Position.PosType;
+import jnibwapi.BWAPIEventListener;
+import jnibwapi.BaseLocation;
+import jnibwapi.ChokePoint;
+import jnibwapi.JNIBWAPI;
+import jnibwapi.Position;
+import jnibwapi.Position.PosType;
 import jnibwapi.Region;
 import jnibwapi.Unit;
-		import jnibwapi.types.UnitType;
-		import jnibwapi.types.UnitType.UnitTypes;
-		import jnibwapi.Map;
-		import jnibwapi.util.BWColor;
-		import jnibwapi.Player;
+import jnibwapi.types.UnitType;
+import jnibwapi.types.UnitType.UnitTypes;
+import jnibwapi.Map;
+import jnibwapi.util.BWColor;
+import jnibwapi.Player;
 
 
 public class Terran_Bot implements BWAPIEventListener {
