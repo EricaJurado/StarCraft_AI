@@ -167,29 +167,31 @@ public class Terran_Bot implements BWAPIEventListener {
 	}
 
 	public Position Spiral(Position pos){
-		for(int x = -2 x <= 2; x++){
-			for(int y = -2; y <= 2; y++){
-				if((x == 0 && y == 0) || Math.abs(x) == 1 || Math.abs(y) == 1){
-					continue;
+		int radius = 2;
+		boolean canBuild = false;
+		Position point = null;
+		
+		while (!canBuild){
+			for(int x = -radius; x <= radius; x++){
+				for(int y = -radius; y <= radius; y++){
+					if((x == 0 && y == 0) || Math.abs(x) == 1 || Math.abs(y) == 1){
+						continue;
+					}
+	
+					int checkX = pos.getBX() + x;
+					int checkY = pos.getBY() + y;
+	
+					point = new Position (checkX, checkY, PosType.BUILD);
+					canBuild = bwapi.getMap().isBuildable(point);
+	
 				}
-
-				int checkX = pos.getBX() + x;
-				int checkY = pos.getBY() + y;
-
-				new Position point = (checkX, checkY, PosType.BUILD);
-				boolean canBuild = point.canBuild();
-
-				if (canBuild){
-					return point;
-				}
-
 			}
+			radius = radius + 2;
 		}
-
-		return null;
+		
+		return point;
 
 	}
-
 
 	//TODO: build choke points
 
