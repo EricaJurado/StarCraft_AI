@@ -89,22 +89,16 @@ public class Terran_Bot implements BWAPIEventListener {
 		//TODO: build bunker at enemy chokepoint
 		// build supply depot
 		// TODO: Determine strategy/timing of building depot
+		//bwapi.drawCircle(initEnemybasePosition, 5, BWColor.White, true, false);
 		
 		countUnits();
 		
-		if(initEnemybasePosition == null){
-			getEnemyPosition();
+		if (initEnemybasePosition != null){
+			bwapi.drawCircle(initEnemybasePosition, 5, BWColor.White, true, false);
 		}
 
 		if(initBasePosition == null) {
 			getInitBaseLocation();
-		}
-		
-		if (closestCP == null){
-			List<Position> choke = artichoke();
-			closestCP = choke.get(0);
-			r1 = choke.get(1);
-			r2 = choke.get(2);
 		}
 	
 		if (!builtBarracks){
@@ -121,14 +115,26 @@ public class Terran_Bot implements BWAPIEventListener {
 				}
 			}
 		}
+		
+		if (closestCP != null){
+			bwapi.drawCircle(closestCP, 5, BWColor.Purple, true, false);
+		}
 
-		if(builtDepot){
+		if(builtDepot && closestCP!=null){
+			System.out.println("issued cmd");
 			scv.move(closestCP, false);
 		}
+	
 		
 		if (builtDepot && !builtMaxBunkers){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
+					if (closestCP == null){
+						List<Position> choke = artichoke();
+						closestCP = choke.get(0);
+						r1 = choke.get(1);
+						r2 = choke.get(2);
+					}
 					Position here = Spiral(unit, closestCP, UnitTypes.Terran_Bunker);
 					bwapi.drawCircle(here, 5, BWColor.Green, true, false);
 					break;
@@ -217,7 +223,6 @@ public class Terran_Bot implements BWAPIEventListener {
 					int checkY = pos.getBY() + y;
 	
 					point = new Position (checkX, checkY, PosType.BUILD);
-					bwapi.drawCircle(point, 5, BWColor.Teal, true, false);
 					
 					if (bwapi.canBuildHere(point, building, true)){
 						unit.build(point, building);
@@ -227,7 +232,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 			radius = radius + 2;
 		}
-		
+		System.out.println(point);
 		return point;
 	}
 	
@@ -285,13 +290,13 @@ public class Terran_Bot implements BWAPIEventListener {
 		cp.add(closestCP);
 		cp.add(r1);
 		cp.add(r2);
-		
+			
 		return cp;
 	}
 	
 	public boolean checkIfBuilt(UnitType building){
 		for (Unit unit : bwapi.getMyUnits()){
-			if (unit.getType() == UnitTypes.Terran_Barracks){
+			if (unit.getType() == building){
 				return true;
 			}
 		}
@@ -329,6 +334,9 @@ public class Terran_Bot implements BWAPIEventListener {
 	}
 	
 	public void buildBaseBarrack(){
+		if (initEnemybasePosition == null){
+			getEnemybasePosition();
+		}
 		for (Unit unit : bwapi.getMyUnits()) {
 			if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 150) {
 				int differenceX = (initBasePosition.getBX() - initEnemybasePosition.getBX());
@@ -356,23 +364,22 @@ public class Terran_Bot implements BWAPIEventListener {
 				initBasePosition = unit.getPosition();
 			}
 		}
+		return;
 	}
 	
-	public void getEnemyPosition(){
+	public void getEnemybasePosition(){
 		for(Unit unit : bwapi.getEnemyUnits()){
 			if(unit.getType() == UnitTypes.Zerg_Hatchery){
-				bwapi.drawCircle(unit.getPosition(), 5, BWColor.Blue, true, false);
 				initEnemybasePosition = unit.getPosition();
 			}
 			else if (unit.getType() == UnitTypes.Protoss_Nexus){
-				bwapi.drawCircle(unit.getPosition(), 5, BWColor.Blue, true, false);
 				initEnemybasePosition = unit.getPosition();
 			}
 			else if (unit.getType() == UnitTypes.Terran_Command_Center){
-				bwapi.drawCircle(unit.getPosition(), 5, BWColor.Blue, true, false);
 				initEnemybasePosition = unit.getPosition();
 			}
 		}
+		return;
 	}
 
 
