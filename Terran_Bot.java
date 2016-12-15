@@ -39,6 +39,7 @@ public class Terran_Bot implements BWAPIEventListener {
 	public static int SupplyDepot_Count = 0;
 
 	public static boolean builtBarracks = false;
+	public static boolean builtDepot = false;
 
 	public static BaseLocation baseLocation;
 
@@ -48,6 +49,12 @@ public class Terran_Bot implements BWAPIEventListener {
 	public static Position closestCP = null;
 	public static Position r1 = null;
 	public static Position r2 = null;
+	
+	public static Unit scv = null;
+	public static boolean issuedMove = false;
+	
+	public static Position barracksPos = null;
+	
 
 	public static void main(String[] args) {
 		new Terran_Bot();
@@ -75,6 +82,27 @@ public class Terran_Bot implements BWAPIEventListener {
 
 	@Override
 	public void matchFrame() {
+		TerranSCV_Count = 0;
+		TerranMarine_Count = 0;
+		Vulture_Count = 0;
+		Factory_Count = 0;
+		SupplyDepot_Count = 0;
+		
+		for (Unit unit : bwapi.getMyUnits()){
+			if (unit.getType() == UnitTypes.Terran_SCV){
+				TerranSCV_Count ++;
+			} else if (unit.getType() == UnitTypes.Terran_Marine){
+				TerranMarine_Count ++;
+			} else if (unit.getType() == UnitTypes.Terran_Vulture){
+				Vulture_Count ++;
+			} else if (unit.getType() == UnitTypes.Terran_Factory){
+				Factory_Count ++;
+			} else if (unit.getType() == UnitTypes.Terran_Supply_Depot){
+				SupplyDepot_Count++;
+			}
+			
+		}
+		
 		// build supply depot
 		// TODO: Determine strategy/timing of building depot
 		if(initEnemybasePosition == null){
@@ -125,11 +153,13 @@ public class Terran_Bot implements BWAPIEventListener {
 					bwapi.drawCircle(buildHere, 10, BWColor.Red, true, false);
 					if (null != buildHere) {
 						Position here = Spiral(unit, buildHere, UnitTypes.Terran_Barracks);
+						barracksPos = here;
 						bwapi.drawCircle(here, 5, BWColor.Grey, true, false);
 					}
 				}
 			}
 		}
+		
 		
 		for (Unit unit : bwapi.getMyUnits()){
 			if (unit.getType() == UnitTypes.Terran_Barracks){
@@ -138,27 +168,46 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 		
-		if (builtBarracks){
+		for (Unit unit : bwapi.getMyUnits()){
+			if (unit.getType() == UnitTypes.Terran_Supply_Depot){
+				builtDepot = true;
+			}
+		}
+		
+		if (scv==null){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
-					boolean canBuild = bwapi.getMap().isBuildable(closestCP);
-					bwapi.drawCircle(closestCP, 5, BWColor.White, true, false);
-					if (canBuild){
-						boolean issuedBuild = unit.build(closestCP, UnitTypes.Terran_Bunker);
-						if (issuedBuild){
-							System.out.println("issued command");
-						}
-						break;
-					}
-					else {
-						Position here = Spiral(unit, closestCP, UnitTypes.Terran_Bunker);
-						bwapi.drawCircle(here, 5, BWColor.Green, true, false);
-						break;
-					}
+					scv = unit;
 				}
 			}
 		}
 
+		bwapi.drawCircle(closestCP, 5, BWColor.White, true, false);
+		if(builtDepot){
+			scv.move(closestCP, false);
+		}
+		
+		if (builtDepot){
+			System.out.println("hello?");
+			for (Unit unit : bwapi.getMyUnits()){
+				if (unit.getType() == UnitTypes.Terran_SCV){
+					System.out.println("in here?");
+					Position here = Spiral(unit, closestCP, UnitTypes.Terran_Bunker);
+					bwapi.drawCircle(here, 5, BWColor.Green, true, false);
+					break;
+				}
+			}
+		}
+		
+		if(bwapi.getSelf().getSupplyUsed()>=9 && builtBarracks && !builtDepot){
+			for (Unit unit : bwapi.getMyUnits()){
+				if (unit.getType() == UnitTypes.Terran_SCV){
+					Position here = Spiral(unit, barracksPos, UnitTypes.Terran_Supply_Depot);
+					bwapi.drawCircle(here, 5, BWColor.Green, true, false);
+					break;
+				}
+			}
+		}
 
 
 
@@ -179,6 +228,7 @@ public class Terran_Bot implements BWAPIEventListener {
 				if (unit.getType() == UnitTypes.Terran_Command_Center && bwapi.getSelf().getMinerals() >= 50 ) {
 					unit.train(UnitTypes.Terran_SCV);
 					TerranSCV_Count ++;
+					break;
 				}
 			}
 		}
@@ -246,12 +296,12 @@ public class Terran_Bot implements BWAPIEventListener {
 		int smallestIndexCP = 0;
 		index = 0;
 		for (Position cp : chokePos){
-			double diffX = Math.abs(initBasePosition.getPX() - cp.getPX());
-			double diffY = Math.abs(initBasePosition.getPY() - cp.getPY());
+			double diffX = Math.abs(initBasePosition.getWX() - cp.getWX());
+			double diffY = Math.abs(initBasePosition.getWY() - cp.getWY());
 			double Z = Math.sqrt((diffX*diffX+diffY*diffY));
 			if (Z<= smallestDist || smallestDist == -1){
 				smallestDist = Z;
-				closestCP = cp;
+				closestCP = new Position(cp.getWX(), cp.getWY(), PosType.WALK);
 				smallestIndexCP = index;
 			}
 			index ++;
@@ -284,11 +334,10 @@ public class Terran_Bot implements BWAPIEventListener {
 					int checkY = pos.getBY() + y;
 	
 					point = new Position (checkX, checkY, PosType.BUILD);
-					System.out.println(point);
 					bwapi.drawCircle(point, 5, BWColor.Teal, true, false);
 					
 					if (bwapi.canBuildHere(point, building, true)){
-						unit.build(pos, building);
+						unit.build(point, building);
 						canBuild = true;
 					}
 				}
