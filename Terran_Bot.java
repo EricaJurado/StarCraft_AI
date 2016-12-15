@@ -1,25 +1,25 @@
-﻿package bot;
+package bot;
 
-import java.util.ArrayList;
+		import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+		import java.util.List;
 
 /**
  * Example of a Java AI Client that does nothing.
  */
-import jnibwapi.BWAPIEventListener;
-import jnibwapi.BaseLocation;
-import jnibwapi.ChokePoint;
-import jnibwapi.JNIBWAPI;
-import jnibwapi.Position;
-import jnibwapi.Position.PosType;
+		import jnibwapi.BWAPIEventListener;
+		import jnibwapi.BaseLocation;
+		import jnibwapi.ChokePoint;
+		import jnibwapi.JNIBWAPI;
+		import jnibwapi.Position;
+		import jnibwapi.Position.PosType;
 import jnibwapi.Region;
 import jnibwapi.Unit;
-import jnibwapi.types.UnitType;
-import jnibwapi.types.UnitType.UnitTypes;
-import jnibwapi.Map;
-import jnibwapi.util.BWColor;
-import jnibwapi.Player;
+		import jnibwapi.types.UnitType;
+		import jnibwapi.types.UnitType.UnitTypes;
+		import jnibwapi.Map;
+		import jnibwapi.util.BWColor;
+		import jnibwapi.Player;
 
 
 public class Terran_Bot implements BWAPIEventListener {
@@ -107,8 +107,8 @@ public class Terran_Bot implements BWAPIEventListener {
 			r2 = choke.get(2);
 		}
 
-		bwapi.drawCircle(closestCP, 5, BWColor.Cyan, true, false);
-
+		//bwapi.drawCircle(closestCP, 5, BWColor.Cyan, true, false);
+	
 		// if we haven't already built barracks and we have a scv unit available, spend 250 minerals to build barracks
 		if (!builtBarracks){
 			for (Unit unit : bwapi.getMyUnits()) {
@@ -123,15 +123,42 @@ public class Terran_Bot implements BWAPIEventListener {
 					int buildHereY = initBasePosition.getBY() - (int)(normalizedDifferenceY * distance) ;
 					Position buildHere = new Position(buildHereX, buildHereY, PosType.BUILD);
 					bwapi.drawCircle(buildHere, 10, BWColor.Red, true, false);
-					if (null != buildHere && false != bwapi.canBuildHere(buildHere,UnitTypes.Terran_Barracks, true)){
-						unit.build(buildHere, UnitTypes.Terran_Barracks);
-						break;
-					} else {
-						Spiral(buildHere);
+					if (null != buildHere) {
+						Position here = Spiral(unit, buildHere, UnitTypes.Terran_Barracks);
+						bwapi.drawCircle(here, 5, BWColor.Grey, true, false);
 					}
 				}
 			}
 		}
+		
+		for (Unit unit : bwapi.getMyUnits()){
+			if (unit.getType() == UnitTypes.Terran_Barracks){
+				builtBarracks = true;
+				break;
+			}
+		}
+		
+		if (builtBarracks){
+			for (Unit unit : bwapi.getMyUnits()){
+				if (unit.getType() == UnitTypes.Terran_SCV){
+					boolean canBuild = bwapi.getMap().isBuildable(closestCP);
+					bwapi.drawCircle(closestCP, 5, BWColor.White, true, false);
+					if (canBuild){
+						boolean issuedBuild = unit.build(closestCP, UnitTypes.Terran_Bunker);
+						if (issuedBuild){
+							System.out.println("issued command");
+						}
+						break;
+					}
+					else {
+						Position here = Spiral(unit, closestCP, UnitTypes.Terran_Bunker);
+						bwapi.drawCircle(here, 5, BWColor.Green, true, false);
+						break;
+					}
+				}
+			}
+		}
+
 
 
 
@@ -232,10 +259,6 @@ public class Terran_Bot implements BWAPIEventListener {
 
 		Position r1 = chokepoints.get(smallestIndexCP).getFirstSide();
 		Position r2 = chokepoints.get(smallestIndexCP).getSecondSide();
-		bwapi.drawCircle(r1,5, BWColor.Red, true, false);
-		bwapi.drawCircle(r2, 5, BWColor.Green, true, false);
-		bwapi.drawCircle(closestCP, 5, BWColor.White, true, false);
-		bwapi.drawCircle(closestR, 5, BWColor.Orange, true, false);
 		
 		List<Position> cp = new ArrayList<Position>(3);
 		cp.add(closestCP);
@@ -245,7 +268,7 @@ public class Terran_Bot implements BWAPIEventListener {
 		return cp;
 	}
 
-	public Position Spiral(Position pos){
+	public Position Spiral(Unit unit, Position pos, UnitType building){
 		int radius = 2;
 		boolean canBuild = false;
 		Position point = null;
@@ -261,8 +284,13 @@ public class Terran_Bot implements BWAPIEventListener {
 					int checkY = pos.getBY() + y;
 	
 					point = new Position (checkX, checkY, PosType.BUILD);
-					canBuild = bwapi.getMap().isBuildable(point);
-	
+					System.out.println(point);
+					bwapi.drawCircle(point, 5, BWColor.Teal, true, false);
+					
+					if (bwapi.canBuildHere(point, building, true)){
+						unit.build(pos, building);
+						canBuild = true;
+					}
 				}
 			}
 			radius = radius + 2;
