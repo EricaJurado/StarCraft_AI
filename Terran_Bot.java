@@ -37,9 +37,11 @@ public class Terran_Bot implements BWAPIEventListener {
 	public static int Vulture_Count = 0;
 	public static int Factory_Count = 0;
 	public static int SupplyDepot_Count = 0;
-
+	public static int Bunker_Count = 0;
+	
 	public static boolean builtBarracks = false;
 	public static boolean builtDepot = false;
+	public static boolean builtMaxBunkers = false;
 
 	public static BaseLocation baseLocation;
 
@@ -82,11 +84,16 @@ public class Terran_Bot implements BWAPIEventListener {
 
 	@Override
 	public void matchFrame() {
+		//TODO: supply depot loop (total supplies - supplies used)=1 then we've used up all supplies and need to build new
+		//TODO: build academy so we can build medic
+		//TODO: build bunker at enemy chokepoint
+		
 		TerranSCV_Count = 0;
 		TerranMarine_Count = 0;
 		Vulture_Count = 0;
 		Factory_Count = 0;
 		SupplyDepot_Count = 0;
+		Bunker_Count = 0;
 		
 		for (Unit unit : bwapi.getMyUnits()){
 			if (unit.getType() == UnitTypes.Terran_SCV){
@@ -99,8 +106,14 @@ public class Terran_Bot implements BWAPIEventListener {
 				Factory_Count ++;
 			} else if (unit.getType() == UnitTypes.Terran_Supply_Depot){
 				SupplyDepot_Count++;
+			} else if (unit.getType() == UnitTypes.Terran_Bunker){
+				Bunker_Count ++;
 			}
 			
+		}
+		
+		if (Bunker_Count >=3){
+			builtMaxBunkers = true;
 		}
 		
 		// build supply depot
@@ -134,8 +147,6 @@ public class Terran_Bot implements BWAPIEventListener {
 			r1 = choke.get(1);
 			r2 = choke.get(2);
 		}
-
-		//bwapi.drawCircle(closestCP, 5, BWColor.Cyan, true, false);
 	
 		// if we haven't already built barracks and we have a scv unit available, spend 250 minerals to build barracks
 		if (!builtBarracks){
@@ -187,11 +198,9 @@ public class Terran_Bot implements BWAPIEventListener {
 			scv.move(closestCP, false);
 		}
 		
-		if (builtDepot){
-			System.out.println("hello?");
+		if (builtDepot && !builtMaxBunkers){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
-					System.out.println("in here?");
 					Position here = Spiral(unit, closestCP, UnitTypes.Terran_Bunker);
 					bwapi.drawCircle(here, 5, BWColor.Green, true, false);
 					break;
@@ -208,8 +217,14 @@ public class Terran_Bot implements BWAPIEventListener {
 				}
 			}
 		}
-
-
+		
+		if (builtMaxBunkers && bwapi.getSelf().getMinerals()>=50){
+			for (Unit unit : bwapi.getMyUnits()){
+				if (unit.getType() == UnitTypes.Terran_Barracks){
+					unit.train(UnitTypes.Terran_Marine);
+				}
+			}
+		}
 
 		// if marine count is less than 4 and we have barracks, build another marine
 		if (TerranMarine_Count < 4){
