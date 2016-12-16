@@ -1,35 +1,26 @@
 package bot;
 
-		import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.HashSet;
-		import java.util.List;
-
-/**
- * Example of a Java AI Client that does nothing.
- */
-		import jnibwapi.BWAPIEventListener;
-		import jnibwapi.BaseLocation;
-		import jnibwapi.ChokePoint;
-		import jnibwapi.JNIBWAPI;
-		import jnibwapi.Position;
-		import jnibwapi.Position.PosType;
+import java.util.List;
+import jnibwapi.BWAPIEventListener;
+import jnibwapi.BaseLocation;
+import jnibwapi.ChokePoint;
+import jnibwapi.JNIBWAPI;
+import jnibwapi.Position;
+import jnibwapi.Position.PosType;
 import jnibwapi.Region;
 import jnibwapi.Unit;
-		import jnibwapi.types.UnitType;
-		import jnibwapi.types.UnitType.UnitTypes;
-		import jnibwapi.Map;
-		import jnibwapi.util.BWColor;
-		import jnibwapi.Player;
+import jnibwapi.types.UnitType;
+import jnibwapi.types.UnitType.UnitTypes;
+import jnibwapi.Map;
+import jnibwapi.util.BWColor;
+import jnibwapi.Player;
 
 
 public class Terran_Bot implements BWAPIEventListener {
 	private final JNIBWAPI bwapi;
-
-	/** used for mineral splits */
 	private final HashSet<Unit> claimedMinerals = new HashSet<>();
-
-	/** when should the next overlord be spawned? */
-	private int supplyCap;
 
 	public static int TerranSCV_Count = 0;
 	public static int TerranMarine_Count = 0;
@@ -42,6 +33,7 @@ public class Terran_Bot implements BWAPIEventListener {
 	public static boolean builtBarracks = false;
 	public static boolean builtDepot = false;
 	public static boolean builtMaxBunkers = false;
+	public static boolean issuedMove = false;
 
 	public static BaseLocation baseLocation;
 
@@ -51,12 +43,9 @@ public class Terran_Bot implements BWAPIEventListener {
 	public static Position closestCP = null;
 	public static Position r1 = null;
 	public static Position r2 = null;
-	
-	public static Unit scv = null;
-	public static boolean issuedMove = false;
-	
 	public static Position barracksPos = null;
 	
+	public static Unit scv = null;
 
 	public static void main(String[] args) {
 		new Terran_Bot();
@@ -75,39 +64,44 @@ public class Terran_Bot implements BWAPIEventListener {
 		bwapi.enableUserInput();
 		bwapi.enablePerfectInformation();
 		bwapi.setGameSpeed(0);
-
-		// reset agent state
 		claimedMinerals.clear();
-		supplyCap = 0;
-
 	}
 
 	@Override
 	public void matchFrame() {
-		//TODO: supply depot loop (total supplies - supplies used)=1 then we've used up all supplies and need to build new
-		//TODO: build academy so we can build medic
-		//TODO: build bunker at enemy chokepoint
-		// build supply depot
-		// TODO: Determine strategy/timing of building depot
-		//bwapi.drawCircle(initEnemybasePosition, 5, BWColor.White, true, false);
+		//TODO:
+		//build 12 marine
+		//setup algorithm to build supply depot if we're within certain totalsupplies-supplies used is certain ammount
+		//send marines into barracks
+		//build refinery
+		//mine vespian gas
+		//build factory
+		//train vultures
+		//send out culture once it's been trained 
 		
+		//Stretch:
+		//(send vultures in groups of two)
+		//two vultures attack at same time
+		//repair barracks
+		
+		//Recounts all of our units every frame
 		countUnits();
-		
-		if (initEnemybasePosition != null){
-			bwapi.drawCircle(initEnemybasePosition, 5, BWColor.White, true, false);
-		}
 
+		//If we don't have our own initial base position, go get it.
 		if(initBasePosition == null) {
 			getInitBaseLocation();
 		}
-	
+		
+		//If we haven't built barracks yet, go build it.
 		if (!builtBarracks){
 			buildBaseBarrack();
 		}
 		
+		//Checks if we have barracks and depots and sets bools accordingly.
 		builtBarracks = checkIfBuilt(UnitTypes.Terran_Barracks);
 		builtDepot = checkIfBuilt(UnitTypes.Terran_Supply_Depot);
 		
+		//If our scv to stand at chokepoint is null, go designate one.
 		if (scv==null){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
@@ -116,25 +110,23 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 		
-		if (closestCP != null){
-			bwapi.drawCircle(closestCP, 5, BWColor.Purple, true, false);
-		}
-
+		//If we've got our depot and the chokepoint we'd like to fortify has been set, ask the scv to stand there so the fog of war will be removed in the area.
 		if(builtDepot && closestCP!=null){
-			System.out.println("issued cmd");
 			scv.move(closestCP, false);
 		}
 	
-		
+		//If we've built our depot and we haven't maked out our bunker count
 		if (builtDepot && !builtMaxBunkers){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
 					if (closestCP == null){
+						//artichoke will get information about choke point we want to fortify
 						List<Position> choke = artichoke();
 						closestCP = choke.get(0);
 						r1 = choke.get(1);
 						r2 = choke.get(2);
 					}
+					//Finds suitable position for bunker and builds it there
 					Position here = Spiral(unit, closestCP, UnitTypes.Terran_Bunker);
 					bwapi.drawCircle(here, 5, BWColor.Green, true, false);
 					break;
@@ -142,6 +134,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 		
+		//If we built our barracks but haven't built our depot, go build a depot (using the barracks as ref point)
 		if(bwapi.getSelf().getSupplyUsed()>=9 && builtBarracks && !builtDepot){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
@@ -152,6 +145,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 		
+		//If we've built the max number of bunkers then start training marines
 		if (builtMaxBunkers && bwapi.getSelf().getMinerals()>=50){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_Barracks){
@@ -160,7 +154,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
-		// if marine count is less than 4 and we have barracks, build another marine
+		// if marine count is less than 4 and we have barracks, build another marine.
 		if (TerranMarine_Count < 4){
 			for (Unit unit : bwapi.getMyUnits()) {
 				if (unit.getType() == UnitTypes.Terran_Barracks && bwapi.getSelf().getMinerals() >= 50 ) {
@@ -170,7 +164,6 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
-		// spawn a unit?
 		// if scv counter is less than 6, build another scv
 		if (TerranSCV_Count < 6){
 			for (Unit unit : bwapi.getMyUnits()) {
@@ -208,11 +201,20 @@ public class Terran_Bot implements BWAPIEventListener {
 	}
 	
 	public Position Spiral(Unit unit, Position pos, UnitType building){
+		/*
+		Spiral takes in unit (which will do the building), an initial start position,
+		and the type of building to build (since not all buildings are the same size). 
+		It will find the closest available position to build by spiraling outwards
+		from the pos you pass in.
+		 */
+		
 		int radius = 2;
 		boolean canBuild = false;
 		Position point = null;
 		
+		//While you haven't found a position you can build at, keep looking!
 		while (!canBuild){
+			//Spiral route
 			for(int x = -radius; x <= radius; x++){
 				for(int y = -radius; y <= radius; y++){
 					if((x == 0 && y == 0) || Math.abs(x) == 1 || Math.abs(y) == 1){
@@ -222,21 +224,28 @@ public class Terran_Bot implements BWAPIEventListener {
 					int checkX = pos.getBX() + x;
 					int checkY = pos.getBY() + y;
 	
+					//build tile to be checked
 					point = new Position (checkX, checkY, PosType.BUILD);
 					
+					//Checks if building can be built at found point
 					if (bwapi.canBuildHere(point, building, true)){
 						unit.build(point, building);
 						canBuild = true;
 					}
 				}
 			}
+			//Increases radius to look out further from initial point.
 			radius = radius + 2;
 		}
-		System.out.println(point);
+		
+		//Return point that it was built out
 		return point;
 	}
 	
 	public List<Position> artichoke(){
+		/*
+		 * Artichoke 
+		 */
 		List<Region> regions = bwapi.getMap().getRegions();
 		List<ChokePoint> chokepoints = bwapi.getMap().getChokePoints();
 		List<Position> regionPos = new ArrayList<Position>(regions.size());
