@@ -1,84 +1,43 @@
 # StarCraft_AI
 
-**Strategy Overview (TvP)** (Derivation of the Siege Expand)
 
-Begin by building SCVs whenever resources allow
+**Strategy Overview**
+This goal of this Terran bot is to quickly establish a basic defense at the chokepoint nearest our base before building Tier 2 units (Vultures) to attack. 
 
-if (supplyUsed == 9 && supplyDepot_Count < 1) {build Supply Depot near ramp; supplyDepot_Count++}
-    
-if (supplyUsed == 12 && !builtBarracks) {build a barracks near ramp; build refinery; builtBarracks = true}   
+After bringing our SCV count to 6, our first goal is to build a Barracks and a Supply Depot. The Barracks will allow us to train the Marine, Terran’s basic ground unit, while the Supply Depot will increase the number of units we can have at a given time. To make sure our Barracks is built near our Command Center, but not positioned where it will block our minerals, we find the enemy’s base and build the Barracks at a slight offset from our Command Center in that direction. We can do that since the minerals are placed on the opposite side of your Command Center from the enemy’s starting location. 
 
-if (builtBarracks && marine_count != 4) {build marines, marine_count++ with each}
+From there we use our spiral function to find a suitable location.  Spiral takes in a unit to do the building, an initial start location, and the type of building to build. From here, the closest available position to build is found by spiraling out from the initial position. In the case of the Barracks, the starting location is the slight offset from the Command Center in the direction of the enemy.
 
-if (marine_count = 4 && !builtBunker) {build bunker in middle of chokepoint; move four marines to it; builtBunker = true}
+After the Barracks and Supply Depot are built, we want to build a Bunker at the nearest chokepoint to help defend against an enemy attack. For this we use our artichoke function. Artichoke iterates through all the chokepoints on a map and determines which is nearest our own base. The center point of the chokepoint is then past to spiral, and a Bunker is built at this nearest possible location. While this is happening, our Barracks are building Marines. Once the Bunker is finished being constructed and four Marines are built (the Bunker’s capacity) those Marines move into the Bunker.
 
-if (supplyUsed == 15 && supplyDepot_Count < 2) {build Supply Depot near ramp; supplyDepot_Count++}
-    
-if (supplyUsed == 16 && factory_Count < 1) {build factory; factory_Count++}
-    
-if (factory is finished) {build machine shop}
-
-when (machine shop is finished) {build one siege tank; move tank behind bunker}
-
-if (supplyUsed == 24) {build supply depot}
-
-if (supplyUsed == 25) {research Siege Mode; haveSiege = true}
-
-if (haveSiege) {set tank in chokepoint to siege mode}
-
-if (supplyUsed == 28) {build second factory}
-
-if (int supplyTotal - in supplyUsed =< 1) {build supply depot; supplyDepot_Coutn++}
-
-    -From here, stop making SCVs, and only make Siege Tanks (fac w/ MS) and Vultures (fac w/o)
-
-when (second factory is done) {make third}
-
-when (third factory is done) {give third machine shop}
-
-when (machine shop is done) {build fourth}
-
-When eight tanks are done, we attack with all tanks and vultures, and have all four factories pump out vultures
+Now that a defense has been set-up at the chokepoint, we focus on building the Tier 2 units we’ll use to attack the enemy. We begin by building a Refinery to collect Vespene Gas. Once we have collected enough Gas, we build a Factory using spiral to find a suitable location near our Command Center. Once the Factory is built, we focus on building the Vulture unit whenever we have the required resources. The Vulture is a fast and cheap unit, and is considered one of the most cost efficient units in the game. Once we have our Factory, all production shifts to creating Vultures. As soon as a Vulture is built, it is told to attack the enemies base. Our goal with this strategy is to overwhelm the enemy’s defenses; while no individual Vulture will destroy the base, the speed with which we can create Vultures allows us to win by attrition. Meanwhile, our Marines in their Bunker will help defend against an enemy attack.
 
 
 
-**Strategy Overview (TvZ)** (1.5 rax)
+**Build Order Overview**
 
-Begin by building SCVs whenever resources allow
+if (SCV count < 6) Build more SCVs
 
-if (supplyUsed == 9) {build supply depot}
+if (SCV is idle) Collect Minerals
 
-if (supplyUsed == 11) {build barracks}
+if (!built Supply Depot) Build Supply Depot
 
-if (supplyUsed == 15) {build supply depot}
+if (Supply Total - Supplies Used <= 3) Build another Supply Depot
 
-if (supplyUsed == 22) {supply depot}
+if (built Supply Depot && !built Barracks) Build Barracks
 
-if (supplyUsed == 23) {refinery}
+if (built Barracks && Marine count < 4) Build Marines
 
-if (supplyUsed == 25) {bunker in chokepoint}
+if (built Depot && we have information on the nearest Chokepoint) Send one SCV to the Chokepoint to clear the fog of war
 
-when (bunker is built) {stop building SCVs; begin building marines}
+if (built Depot && !built Bunker) A Bunker is built at a location as near the center of the chokepoint as possible
 
-if (marine_Count = 4) {put 4 marines in bunker}
+if (built Bunker && Marine count is >= 4) Send Marines to our Bunker to defend the chokepoint
 
-if (supplyUsed == 30) {academy}
+if (built Supply Depot, Barracks, and Bunker && !built Refinery) Build Refinery
 
-when (academy is built) {research stim pack}
+if (built Supply Depot, Barracks, Bunker, and Refinery && !built Factory) Build Factory
 
-if (supplyUsed == 32) {barracks}
+if (built Factory) Build Vultures
 
-if (supplyUsed == 35) {barracks}
-    
-if (supplyUsed == 40) {2 barracks, supply depot}
-
-if (marine_Count => 20) {build medics}
-
-When you have at least 20 marines and 5 medics, attack with all except marines in bunker.
-
-Continue making marines and attacking
-
-if (medic_Count < 5) {build medic}
-
-if (marines are in the opponents chokepoint) {build bunker in middle of this choke; four marines enter it}
-
+As Vultures are built, they are sent to attack the enemy base.
