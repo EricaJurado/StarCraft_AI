@@ -3,7 +3,7 @@
 
 **Strategy Overview**
 
-This goal of this Terran bot is to quickly establish a basic defense at the chokepoint nearest our base before building Tier 2 units (Vultures) to attack. 
+This goal of this Terran bot is to quickly establish a basic defense at the chokepoint nearest our base before building large amounts of Vultures to attack and hopefully overwhelm the enemy's base. 
 
 After bringing our SCV count to 6, our first goal is to build a Barracks and a Supply Depot. The Barracks will allow us to train the Marine, Terran’s basic ground unit, while the Supply Depot will increase the number of units we can have at a given time. To make sure our Barracks is built near our Command Center, but not positioned where it will block our minerals, we find the enemy’s base and build the Barracks at a slight offset from our Command Center in that direction. We can do that since the minerals are placed on the opposite side of your Command Center from the enemy’s starting location. 
 
