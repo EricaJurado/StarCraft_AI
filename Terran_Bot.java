@@ -32,7 +32,9 @@ public class Terran_Bot implements BWAPIEventListener {
 	
 	public static boolean builtBarracks = false;
 	public static boolean builtDepot = false;
+	public static boolean builtRefinery = false;
 	public static boolean builtMaxBunkers = false;
+	public static boolean builtFactory = false;
 	public static boolean issuedMove = false;
 
 	public static BaseLocation baseLocation;
@@ -86,7 +88,7 @@ public class Terran_Bot implements BWAPIEventListener {
 		
 		//Recounts all of our units every frame
 		countUnits();
-
+		
 		//If we don't have our own initial base position, go get it.
 		if(initBasePosition == null) {
 			getInitBaseLocation();
@@ -100,6 +102,8 @@ public class Terran_Bot implements BWAPIEventListener {
 		//Checks if we have barracks and depots and sets bools accordingly.
 		builtBarracks = checkIfBuilt(UnitTypes.Terran_Barracks);
 		builtDepot = checkIfBuilt(UnitTypes.Terran_Supply_Depot);
+		builtRefinery = checkIfBuilt(UnitTypes.Terran_Refinery);
+		builtFactory = checkIfBuilt(UnitTypes.Terran_Factory);
 		
 		//If our scv to stand at chokepoint is null, go designate one.
 		if (scv==null){
@@ -115,8 +119,41 @@ public class Terran_Bot implements BWAPIEventListener {
 			scv.move(closestCP, false);
 		}
 	
-		//If we've built our depot and we haven't maked out our bunker count
-		if (builtDepot && !builtMaxBunkers){
+
+		if (!builtDepot){
+			for (Unit unit : bwapi.getMyUnits()){
+				if (unit.getType() == UnitTypes.Terran_SCV){
+					Position here = Spiral(unit, initBasePosition, UnitTypes.Terran_Supply_Depot);
+					bwapi.drawCircle(here, 5, BWColor.Green, true, false);
+					break;
+				}
+			}
+		}
+		
+		if(builtDepot && !builtBarracks){
+			buildBaseBarrack();
+		}
+		
+		if (builtDepot && builtBarracks && builtMaxBunkers && builtRefinery){
+			for (Unit unit : bwapi.getMyUnits()){
+				if (unit.getType() == UnitTypes.Terran_SCV){
+					Position here = Spiral(unit, initBasePosition ,UnitTypes.Terran_Factory);
+					break;
+				}
+			}
+		}
+		
+		if(builtDepot && builtBarracks && builtMaxBunkers && !builtRefinery){
+			for (Unit unit : bwapi.getMyUnits()){
+				if (unit.getType() == UnitTypes.Terran_SCV){
+					Position here = Spiral(unit, initBasePosition ,UnitTypes.Terran_Refinery);
+					break;
+				}
+			}
+		}
+		
+		//If we've built our depot and we haven't maxed out our bunker count
+		if (builtDepot && builtBarracks && !builtMaxBunkers){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
 					if (closestCP == null){
@@ -134,22 +171,14 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 		
-		//If we built our barracks but haven't built our depot, go build a depot (using the barracks as ref point)
-		if(bwapi.getSelf().getSupplyUsed()>=9 && builtBarracks && !builtDepot){
-			for (Unit unit : bwapi.getMyUnits()){
-				if (unit.getType() == UnitTypes.Terran_SCV){
-					Position here = Spiral(unit, barracksPos, UnitTypes.Terran_Supply_Depot);
-					bwapi.drawCircle(here, 5, BWColor.Green, true, false);
-					break;
-				}
-			}
-		}
 		
-		//If we've built the max number of bunkers then start training marines
-		if (builtMaxBunkers && bwapi.getSelf().getMinerals()>=50){
-			for (Unit unit : bwapi.getMyUnits()){
-				if (unit.getType() == UnitTypes.Terran_Barracks){
-					unit.train(UnitTypes.Terran_Marine);
+		if(builtDepot && builtBarracks && builtMaxBunkers){
+			if (determineNeedDepots()){
+				for (Unit unit: bwapi.getMyUnits()){
+					if (unit.getType() == UnitTypes.Terran_SCV){
+						Position here = Spiral(unit, initBasePosition ,UnitTypes.Terran_Supply_Depot);
+						break;
+					}
 				}
 			}
 		}
@@ -175,7 +204,6 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
-
 		// collect minerals
 		// currently all (idle) scv units near minerals will collect minerals
 		for (Unit unit : bwapi.getMyUnits()) {
@@ -197,6 +225,18 @@ public class Terran_Bot implements BWAPIEventListener {
 				}
 
 			}
+		}
+		
+		System.out.println("?");
+
+	}
+	
+	//Determine if diff b/w supply total and used is <=3 to build more bunker
+	public boolean determineNeedDepots(){
+		if(bwapi.getSelf().getSupplyTotal() - bwapi.getSelf().getSupplyUsed() <= 3){
+			return true;
+		} else {
+			return false;
 		}
 	}
 	
