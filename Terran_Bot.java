@@ -22,6 +22,7 @@ public class Terran_Bot implements BWAPIEventListener {
 	private final JNIBWAPI bwapi;
 	private final HashSet<Unit> claimedMinerals = new HashSet<>();
 
+	//hold count of units to be recounter each match frame
 	public static int TerranSCV_Count = 0;
 	public static int TerranMarine_Count = 0;
 	public static int Tank_Count = 0;
@@ -30,25 +31,29 @@ public class Terran_Bot implements BWAPIEventListener {
 	public static int SupplyDepot_Count = 0;
 	public static int Bunker_Count = 0;
 
+	//booleans used to determine if we have building of specified time (or quantity)
 	public static boolean builtBarracks = false;
 	public static boolean builtDepot = false;
 	public static boolean builtRefinery = false;
 	public static boolean builtMaxBunkers = false;
 	public static boolean builtFactory = false;
+	//boolean used to determine if we issues command to scv unit
 	public static boolean issuedMove = false;
 
-	public static BaseLocation baseLocation;
+	//public static BaseLocation baseLocation;
 
-	public static Position myBase;
+	//public static Position myBase;
 	public static Position initEnemybasePosition = null;
 	public static Position initBasePosition = null;
+	//will hold position of choke point closest to our inital base
 	public static Position closestCP = null;
+	//hold position of region 1 and 2 of choke point respectively
 	public static Position r1 = null;
 	public static Position r2 = null;
 	public static Position barracksPos = null;
 
+	//"scout" scv unit to remove fog of war at choke point
 	public static Unit scv = null;
-	public static Unit scv2 = null;
 
 	public static void main(String[] args) {
 		new Terran_Bot();
@@ -72,21 +77,6 @@ public class Terran_Bot implements BWAPIEventListener {
 
 	@Override
 	public void matchFrame() {
-		//TODO:
-		//build 12 marine
-		//setup algorithm to build supply depot if we're within certain totalsupplies-supplies used is certain ammount
-		//send marines into barracks
-		//build refinery
-		//mine vespian gas
-		//build factory
-		//train vultures
-		//send out culture once it's been trained
-
-		//Stretch:
-		//(send vultures in groups of two)
-		//two vultures attack at same time
-		//repair barracks
-
 		//Recounts all of our units every frame
 		countUnits();
 
@@ -115,21 +105,13 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
-		if (scv2 == null){
-			for (Unit unit : bwapi.getMyUnits()){
-				if(unit.getType() == UnitTypes.Terran_SCV){
-					scv2  = unit;
-				}
-			}
-		}
-
 		//If we've got our depot and the chokepoint we'd like to fortify has been set, ask the scv to stand there so the fog of war will be removed in the area.
 		if(builtDepot && closestCP!=null){
 			scv.move(closestCP, false);
 			scv.move(initBasePosition, false);
 		}
 
-
+		//If we haven't built a depot, go build one near our base
 		if (!builtDepot){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
@@ -140,10 +122,12 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
+		//If we haven't built a barracks but we've built a depot, built barracks next
 		if(builtDepot && !builtBarracks){
 			buildBaseBarrack();
 		}
 
+		//If we've built our depot, barracks, and have fortified our chokepoint with bunkers, and have built a refinery, go built a factory near our base.
 		if (builtDepot && builtBarracks && builtMaxBunkers && builtRefinery){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
@@ -153,6 +137,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
+		//If we've built a depot, barracks, fortified out chokepoint with bunkers and we haven't built a refinery, go build a refinery.
 		if(builtDepot && builtBarracks && builtMaxBunkers && !builtRefinery){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
@@ -181,12 +166,12 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
-
+		//If we've built a depot, barack, and maxed out bunkers, determine if we need bunkers. If we do then build another one near our base.
 		if(builtDepot && builtBarracks && builtMaxBunkers){
 			if (determineNeedDepots()){
 				for (Unit unit: bwapi.getMyUnits()){
 					if (unit.getType() == UnitTypes.Terran_SCV){
-						Position here = Spiral(unit, initBasePosition ,UnitTypes.Terran_Supply_Depot);
+						Position here = Spiral(unit, initBasePosition, UnitTypes.Terran_Supply_Depot);
 						break;
 					}
 				}
@@ -203,6 +188,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
+		//If we've built a factory, go pump out vultures.
 		if(builtFactory){
 			for(Unit unit : bwapi.getMyUnits()){
 				if(unit.getType() == UnitTypes.Terran_Factory && bwapi.getSelf().getMinerals() >= 75){
@@ -210,6 +196,7 @@ public class Terran_Bot implements BWAPIEventListener {
 				}
 			}
 		}
+
 		// if scv counter is less than 6, build another scv
 		if (TerranSCV_Count < 6){
 			for (Unit unit : bwapi.getMyUnits()) {
@@ -221,6 +208,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
+		//If our marine count is >= 4 and we've maxed out our bunkers, send marines to bunker.
 		if(TerranMarine_Count >= 4 && builtMaxBunkers){
 			for (Unit unit : bwapi.getMyUnits()){
 				if(unit.getType() == UnitTypes.Terran_Marine){
@@ -256,6 +244,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 
+		//Spam our enemies with all our vultures
 		for (Unit unit : bwapi.getMyUnits()){
 			if(unit.getType() == UnitTypes.Terran_Vulture){
 				unit.rightClick(initEnemybasePosition, false);
@@ -317,12 +306,19 @@ public class Terran_Bot implements BWAPIEventListener {
 
 	public List<Position> artichoke(){
 		/*
-		 * Artichoke
-		 */
+		 Artichoke determines the closest chokepoint near our own base
+		 using our base's region and interating through all chokepoints
+		 to see what's closest. It will return the chokepoint and region
+		 1 and 2 position of that chokepoint. (Region info not currently
+		 being used.)
+		*/
 		List<Region> regions = bwapi.getMap().getRegions();
 		List<ChokePoint> chokepoints = bwapi.getMap().getChokePoints();
+		//RegionPos and chokePos will hold the positions of all regions and chokepoints so we can determine dist from our base.
 		List<Position> regionPos = new ArrayList<Position>(regions.size());
 		List<Position> chokePos = new ArrayList<Position>(chokepoints.size());
+
+		//Adds all regions (center) to regionPos list
 		for (Region r : regions){
 			Position p = r.getCenter();
 			regionPos.add(p);
@@ -330,7 +326,6 @@ public class Terran_Bot implements BWAPIEventListener {
 
 		Position closestR = null; //closest region pos to my start pos
 		double smallestDist = -1;
-		int smallestIndexR = 0;
 		int	index = 0;
 		for (Position rp : regionPos){
 			double diffX = Math.abs(initBasePosition.getPX() - rp.getPX());
@@ -339,17 +334,17 @@ public class Terran_Bot implements BWAPIEventListener {
 			if (Z<= smallestDist || smallestDist == -1){
 				smallestDist = Z;
 				closestR = rp;
-				smallestIndexR = index;
 			}
 			index ++;
 		}
 
+		//Adds all chokepoints (center) to chokePos list
 		for (ChokePoint cp : chokepoints){
 			Position p = cp.getCenter();
 			chokePos.add(p);
 		}
 
-		Position closestCP = null;
+		Position closestCP = null; //closest chokepoint to my start pos
 		smallestDist = -1;
 		int smallestIndexCP = 0;
 		index = 0;
@@ -359,8 +354,8 @@ public class Terran_Bot implements BWAPIEventListener {
 			double Z = Math.sqrt((diffX*diffX+diffY*diffY));
 			if (Z<= smallestDist || smallestDist == -1){
 				smallestDist = Z;
-				closestCP = new Position(cp.getWX(), cp.getWY(), PosType.WALK);
 				smallestIndexCP = index;
+				closestCP = new Position(cp.getWX(), cp.getWY(), PosType.WALK);
 			}
 			index ++;
 		}
@@ -377,6 +372,7 @@ public class Terran_Bot implements BWAPIEventListener {
 	}
 
 	public boolean checkIfBuilt(UnitType building){
+		//Generic function to see if we've built a particular kind of building or not
 		for (Unit unit : bwapi.getMyUnits()){
 			if (unit.getType() == building){
 				return true;
@@ -386,6 +382,7 @@ public class Terran_Bot implements BWAPIEventListener {
 	}
 
 	public void countUnits(){
+		//Counts our units. Called each match frame.
 		TerranSCV_Count = 0;
 		TerranMarine_Count = 0;
 		Vulture_Count = 0;
@@ -416,31 +413,39 @@ public class Terran_Bot implements BWAPIEventListener {
 	}
 
 	public void buildBaseBarrack(){
+		//Builds the base barracks between our base and the enemy base
 		if (initEnemybasePosition == null){
+			//If the enemy's base position is null, you need to go get it!
 			getEnemybasePosition();
 		}
 		for (Unit unit : bwapi.getMyUnits()) {
+			//Checking to see if it's possible ot build
 			if (unit.getType() == UnitTypes.Terran_SCV && bwapi.getSelf().getMinerals() >= 150) {
+				//Note that all are in build tiles
 				int differenceX = (initBasePosition.getBX() - initEnemybasePosition.getBX());
 				int differenceY = (initBasePosition.getBY() - initEnemybasePosition.getBY());
 				float magnitude = (float)Math.sqrt(Math.pow(differenceX, 2) + Math.pow(differenceY, 2));
 				float normalizedDifferenceX = differenceX/magnitude;
 				float normalizedDifferenceY = differenceY/magnitude;
 				int distance = 5;
+				//Applies calculated offset to our base location to set ideal position for barrack
 				int buildHereX = initBasePosition.getBX() - (int)(normalizedDifferenceX * distance);
 				int buildHereY = initBasePosition.getBY() - (int)(normalizedDifferenceY * distance) ;
 				Position buildHere = new Position(buildHereX, buildHereY, PosType.BUILD);
 				bwapi.drawCircle(buildHere, 10, BWColor.Red, true, false);
 				if (null != buildHere) {
+					//Spiral is called so if the ideal postion is not buildable, it'll determine the next available space and build the barracks there
 					Position here = Spiral(unit, buildHere, UnitTypes.Terran_Barracks);
 					barracksPos = here;
 					bwapi.drawCircle(here, 5, BWColor.Grey, true, false);
+					break;
 				}
 			}
 		}
 	}
 
 	public void getInitBaseLocation(){
+		//Gets our base position
 		for(Unit unit : bwapi.getMyUnits()) {
 			if (unit.getType() == UnitTypes.Terran_Command_Center) {
 				initBasePosition = unit.getPosition();
@@ -450,6 +455,7 @@ public class Terran_Bot implements BWAPIEventListener {
 	}
 
 	public void getEnemybasePosition(){
+		//Gets initial enemy base positon by looking for the initial building they will have
 		for(Unit unit : bwapi.getEnemyUnits()){
 			if(unit.getType() == UnitTypes.Zerg_Hatchery){
 				initEnemybasePosition = unit.getPosition();
