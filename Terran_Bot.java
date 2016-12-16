@@ -1,21 +1,21 @@
-package bot;
+﻿package bot;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import jnibwapi.BWAPIEventListener;
-import jnibwapi.BaseLocation;
-import jnibwapi.ChokePoint;
-import jnibwapi.JNIBWAPI;
-import jnibwapi.Position;
-import jnibwapi.Position.PosType;
-import jnibwapi.Region;
-import jnibwapi.Unit;
-import jnibwapi.types.UnitType;
-import jnibwapi.types.UnitType.UnitTypes;
-import jnibwapi.Map;
-import jnibwapi.util.BWColor;
-import jnibwapi.Player;
+		import java.util.ArrayList;
+		import java.util.HashSet;
+		import java.util.List;
+		import jnibwapi.BWAPIEventListener;
+		import jnibwapi.BaseLocation;
+		import jnibwapi.ChokePoint;
+		import jnibwapi.JNIBWAPI;
+		import jnibwapi.Position;
+		import jnibwapi.Position.PosType;
+		import jnibwapi.Region;
+		import jnibwapi.Unit;
+		import jnibwapi.types.UnitType;
+		import jnibwapi.types.UnitType.UnitTypes;
+		import jnibwapi.Map;
+		import jnibwapi.util.BWColor;
+		import jnibwapi.Player;
 
 
 public class Terran_Bot implements BWAPIEventListener {
@@ -29,7 +29,7 @@ public class Terran_Bot implements BWAPIEventListener {
 	public static int Factory_Count = 0;
 	public static int SupplyDepot_Count = 0;
 	public static int Bunker_Count = 0;
-	
+
 	public static boolean builtBarracks = false;
 	public static boolean builtDepot = false;
 	public static boolean builtRefinery = false;
@@ -46,8 +46,9 @@ public class Terran_Bot implements BWAPIEventListener {
 	public static Position r1 = null;
 	public static Position r2 = null;
 	public static Position barracksPos = null;
-	
+
 	public static Unit scv = null;
+	public static Unit scv2 = null;
 
 	public static void main(String[] args) {
 		new Terran_Bot();
@@ -79,32 +80,32 @@ public class Terran_Bot implements BWAPIEventListener {
 		//mine vespian gas
 		//build factory
 		//train vultures
-		//send out culture once it's been trained 
-		
+		//send out culture once it's been trained
+
 		//Stretch:
 		//(send vultures in groups of two)
 		//two vultures attack at same time
 		//repair barracks
-		
+
 		//Recounts all of our units every frame
 		countUnits();
-		
+
 		//If we don't have our own initial base position, go get it.
 		if(initBasePosition == null) {
 			getInitBaseLocation();
 		}
-		
+
 		//If we haven't built barracks yet, go build it.
 		if (!builtBarracks){
 			buildBaseBarrack();
 		}
-		
+
 		//Checks if we have barracks and depots and sets bools accordingly.
 		builtBarracks = checkIfBuilt(UnitTypes.Terran_Barracks);
 		builtDepot = checkIfBuilt(UnitTypes.Terran_Supply_Depot);
 		builtRefinery = checkIfBuilt(UnitTypes.Terran_Refinery);
 		builtFactory = checkIfBuilt(UnitTypes.Terran_Factory);
-		
+
 		//If our scv to stand at chokepoint is null, go designate one.
 		if (scv==null){
 			for (Unit unit : bwapi.getMyUnits()){
@@ -113,12 +114,21 @@ public class Terran_Bot implements BWAPIEventListener {
 				}
 			}
 		}
-		
+
+		if (scv2 == null){
+			for (Unit unit : bwapi.getMyUnits()){
+				if(unit.getType() == UnitTypes.Terran_SCV){
+					scv2  = unit;
+				}
+			}
+		}
+
 		//If we've got our depot and the chokepoint we'd like to fortify has been set, ask the scv to stand there so the fog of war will be removed in the area.
 		if(builtDepot && closestCP!=null){
 			scv.move(closestCP, false);
+			scv.move(initBasePosition, false);
 		}
-	
+
 
 		if (!builtDepot){
 			for (Unit unit : bwapi.getMyUnits()){
@@ -129,11 +139,11 @@ public class Terran_Bot implements BWAPIEventListener {
 				}
 			}
 		}
-		
+
 		if(builtDepot && !builtBarracks){
 			buildBaseBarrack();
 		}
-		
+
 		if (builtDepot && builtBarracks && builtMaxBunkers && builtRefinery){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
@@ -142,7 +152,7 @@ public class Terran_Bot implements BWAPIEventListener {
 				}
 			}
 		}
-		
+
 		if(builtDepot && builtBarracks && builtMaxBunkers && !builtRefinery){
 			for (Unit unit : bwapi.getMyUnits()){
 				if (unit.getType() == UnitTypes.Terran_SCV){
@@ -151,7 +161,7 @@ public class Terran_Bot implements BWAPIEventListener {
 				}
 			}
 		}
-		
+
 		//If we've built our depot and we haven't maxed out our bunker count
 		if (builtDepot && builtBarracks && !builtMaxBunkers){
 			for (Unit unit : bwapi.getMyUnits()){
@@ -170,8 +180,8 @@ public class Terran_Bot implements BWAPIEventListener {
 				}
 			}
 		}
-		
-		
+
+
 		if(builtDepot && builtBarracks && builtMaxBunkers){
 			if (determineNeedDepots()){
 				for (Unit unit: bwapi.getMyUnits()){
@@ -186,13 +196,20 @@ public class Terran_Bot implements BWAPIEventListener {
 		// if marine count is less than 4 and we have barracks, build another marine.
 		if (TerranMarine_Count < 4){
 			for (Unit unit : bwapi.getMyUnits()) {
-				if (unit.getType() == UnitTypes.Terran_Barracks && bwapi.getSelf().getMinerals() >= 50 ) {
+				if (unit.getType() == UnitTypes.Terran_Barracks && bwapi.getSelf().getMinerals() >= 50) {
 					unit.train(UnitTypes.Terran_Marine);
-					TerranMarine_Count ++;
+					break;
 				}
 			}
 		}
 
+		if(builtFactory){
+			for(Unit unit : bwapi.getMyUnits()){
+				if(unit.getType() == UnitTypes.Terran_Factory && bwapi.getSelf().getMinerals() >= 75){
+					unit.train(UnitTypes.Terran_Vulture);
+				}
+			}
+		}
 		// if scv counter is less than 6, build another scv
 		if (TerranSCV_Count < 6){
 			for (Unit unit : bwapi.getMyUnits()) {
@@ -200,6 +217,18 @@ public class Terran_Bot implements BWAPIEventListener {
 					unit.train(UnitTypes.Terran_SCV);
 					TerranSCV_Count ++;
 					break;
+				}
+			}
+		}
+
+		if(TerranMarine_Count >= 4 && builtMaxBunkers){
+			for (Unit unit : bwapi.getMyUnits()){
+				if(unit.getType() == UnitTypes.Terran_Marine){
+					for(Unit bunker : bwapi.getMyUnits()){
+						if(bunker.getType() == UnitTypes.Terran_Bunker){
+							unit.rightClick(bunker, false);
+						}
+					}
 				}
 			}
 		}
@@ -213,7 +242,7 @@ public class Terran_Bot implements BWAPIEventListener {
 						if (minerals.getType().isMineralField()){
 							double dist = unit.getDistance(minerals);
 
-							if (dist < 300) {
+							if (dist < 400) {
 								unit.rightClick(minerals, false);
 								claimedMinerals.add(minerals);
 								break;
@@ -226,11 +255,15 @@ public class Terran_Bot implements BWAPIEventListener {
 
 			}
 		}
-		
-		System.out.println("?");
+
+		for (Unit unit : bwapi.getMyUnits()){
+			if(unit.getType() == UnitTypes.Terran_Vulture){
+				unit.rightClick(initEnemybasePosition, false);
+			}
+		}
 
 	}
-	
+
 	//Determine if diff b/w supply total and used is <=3 to build more bunker
 	public boolean determineNeedDepots(){
 		if(bwapi.getSelf().getSupplyTotal() - bwapi.getSelf().getSupplyUsed() <= 3){
@@ -239,19 +272,19 @@ public class Terran_Bot implements BWAPIEventListener {
 			return false;
 		}
 	}
-	
+
 	public Position Spiral(Unit unit, Position pos, UnitType building){
 		/*
 		Spiral takes in unit (which will do the building), an initial start position,
-		and the type of building to build (since not all buildings are the same size). 
+		and the type of building to build (since not all buildings are the same size).
 		It will find the closest available position to build by spiraling outwards
 		from the pos you pass in.
 		 */
-		
+
 		int radius = 2;
 		boolean canBuild = false;
 		Position point = null;
-		
+
 		//While you haven't found a position you can build at, keep looking!
 		while (!canBuild){
 			//Spiral route
@@ -260,13 +293,13 @@ public class Terran_Bot implements BWAPIEventListener {
 					if((x == 0 && y == 0) || Math.abs(x) == 1 || Math.abs(y) == 1){
 						continue;
 					}
-	
+
 					int checkX = pos.getBX() + x;
 					int checkY = pos.getBY() + y;
-	
+
 					//build tile to be checked
 					point = new Position (checkX, checkY, PosType.BUILD);
-					
+
 					//Checks if building can be built at found point
 					if (bwapi.canBuildHere(point, building, true)){
 						unit.build(point, building);
@@ -277,14 +310,14 @@ public class Terran_Bot implements BWAPIEventListener {
 			//Increases radius to look out further from initial point.
 			radius = radius + 2;
 		}
-		
+
 		//Return point that it was built out
 		return point;
 	}
-	
+
 	public List<Position> artichoke(){
 		/*
-		 * Artichoke 
+		 * Artichoke
 		 */
 		List<Region> regions = bwapi.getMap().getRegions();
 		List<ChokePoint> chokepoints = bwapi.getMap().getChokePoints();
@@ -294,7 +327,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			Position p = r.getCenter();
 			regionPos.add(p);
 		}
-		
+
 		Position closestR = null; //closest region pos to my start pos
 		double smallestDist = -1;
 		int smallestIndexR = 0;
@@ -310,7 +343,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 			index ++;
 		}
-		
+
 		for (ChokePoint cp : chokepoints){
 			Position p = cp.getCenter();
 			chokePos.add(p);
@@ -334,15 +367,15 @@ public class Terran_Bot implements BWAPIEventListener {
 
 		Position r1 = chokepoints.get(smallestIndexCP).getFirstSide();
 		Position r2 = chokepoints.get(smallestIndexCP).getSecondSide();
-		
+
 		List<Position> cp = new ArrayList<Position>(3);
 		cp.add(closestCP);
 		cp.add(r1);
 		cp.add(r2);
-			
+
 		return cp;
 	}
-	
+
 	public boolean checkIfBuilt(UnitType building){
 		for (Unit unit : bwapi.getMyUnits()){
 			if (unit.getType() == building){
@@ -351,7 +384,7 @@ public class Terran_Bot implements BWAPIEventListener {
 		}
 		return false;
 	}
-	
+
 	public void countUnits(){
 		TerranSCV_Count = 0;
 		TerranMarine_Count = 0;
@@ -359,7 +392,7 @@ public class Terran_Bot implements BWAPIEventListener {
 		Factory_Count = 0;
 		SupplyDepot_Count = 0;
 		Bunker_Count = 0;
-		
+
 		for (Unit unit : bwapi.getMyUnits()){
 			if (unit.getType() == UnitTypes.Terran_SCV){
 				TerranSCV_Count ++;
@@ -374,14 +407,14 @@ public class Terran_Bot implements BWAPIEventListener {
 			} else if (unit.getType() == UnitTypes.Terran_Bunker){
 				Bunker_Count ++;
 			}
-			
+
 		}
-		
-		if (Bunker_Count >=3){
+
+		if (Bunker_Count >=1){
 			builtMaxBunkers = true;
 		}
 	}
-	
+
 	public void buildBaseBarrack(){
 		if (initEnemybasePosition == null){
 			getEnemybasePosition();
@@ -406,7 +439,7 @@ public class Terran_Bot implements BWAPIEventListener {
 			}
 		}
 	}
-	
+
 	public void getInitBaseLocation(){
 		for(Unit unit : bwapi.getMyUnits()) {
 			if (unit.getType() == UnitTypes.Terran_Command_Center) {
@@ -415,7 +448,7 @@ public class Terran_Bot implements BWAPIEventListener {
 		}
 		return;
 	}
-	
+
 	public void getEnemybasePosition(){
 		for(Unit unit : bwapi.getEnemyUnits()){
 			if(unit.getType() == UnitTypes.Zerg_Hatchery){
