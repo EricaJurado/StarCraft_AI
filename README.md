@@ -42,3 +42,6 @@ if (built Supply Depot, Barracks, Bunker, and Refinery && !built Factory) Build 
 if (built Factory) Build Vultures
 
 As Vultures are built, they are sent to attack the enemy base.
+
+
+**Note:** We are requesting the bonus points for this project for our use of Chokepoints as discussed in person. Thank you!
